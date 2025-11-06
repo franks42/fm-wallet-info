@@ -33,6 +33,7 @@ package-lock.json
 live-screenshot.png
 debug-screenshot.png
 *.spec.js
+*.test.js
 test-*.png
 test-results/
 server.log
