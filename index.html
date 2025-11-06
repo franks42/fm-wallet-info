@@ -3,11 +3,20 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Figure Markets - HASH Price</title>
+    <title>Figure Markets - HASH Price v1.0.1</title>
+
+    <script>
+        // Version and loading diagnostics
+        window.APP_VERSION = 'v1.0.1';
+        console.log('🚀 FM Wallet Info ' + window.APP_VERSION + ' - Starting...');
+        console.log('📍 Page URL:', window.location.href);
+        console.log('⏰ Load Time:', new Date().toISOString());
+    </script>
 
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        console.log('✅ Tailwind CSS script tag loaded');
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -31,16 +40,28 @@
                 }
             }
         }
+        console.log('✅ Tailwind config applied');
     </script>
 
     <!-- Scittle - ClojureScript interpreter for the browser -->
-    <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.cljs-ajax.js"></script>
-    <script defer crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script defer crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.reagent.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.js"
+            onload="console.log('✅ Scittle core loaded')"
+            onerror="console.error('❌ FAILED to load Scittle core')"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.cljs-ajax.js"
+            onload="console.log('✅ Scittle AJAX loaded')"
+            onerror="console.error('❌ FAILED to load Scittle AJAX')"></script>
+    <script defer crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"
+            onload="console.log('✅ React loaded')"
+            onerror="console.error('❌ FAILED to load React')"></script>
+    <script defer crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+            onload="console.log('✅ ReactDOM loaded')"
+            onerror="console.error('❌ FAILED to load ReactDOM')"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.reagent.js"
+            onload="console.log('✅ Scittle Reagent loaded')"
+            onerror="console.error('❌ FAILED to load Scittle Reagent')"></script>
 </head>
 <body class="bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white font-sans min-h-screen">
+    <script>console.log('✅ Body tag reached');</script>
 
     <div class="max-w-4xl mx-auto p-8">
         <header class="text-center mb-12 pt-8">
@@ -62,11 +83,28 @@
 
         <footer class="text-center mt-12 text-gray-500 text-sm">
             <p>Data from <a href="https://www.figuremarkets.com" target="_blank" class="text-neon-cyan hover:text-neon-green transition-colors">Figure Markets Exchange</a></p>
-            <p class="mt-2">Pure Scittle/ClojureScript • Client-side execution</p>
+            <p class="mt-2">Pure Scittle/ClojureScript • Client-side execution • <span id="version">v1.0.1</span></p>
         </footer>
     </div>
 
+    <script>
+        console.log('✅ DOM structure loaded');
+        document.getElementById('version').textContent = window.APP_VERSION;
+    </script>
+
     <!-- Load ClojureScript Application -->
-    <script type="application/x-scittle" src="src/fm_wallet.cljs"></script>
+    <script type="application/x-scittle" src="src/fm_wallet.cljs"
+            onload="console.log('✅ ClojureScript file loaded - app should initialize')"
+            onerror="console.error('❌ FAILED to load ClojureScript file')"></script>
+
+    <script>
+        console.log('📝 All script tags declared');
+        window.addEventListener('load', function() {
+            console.log('✅ Window load event fired');
+            console.log('🔍 Checking for React:', typeof React !== 'undefined' ? '✅ Found' : '❌ Missing');
+            console.log('🔍 Checking for ReactDOM:', typeof ReactDOM !== 'undefined' ? '✅ Found' : '❌ Missing');
+            console.log('🔍 Checking for scittle:', typeof window.scittle !== 'undefined' ? '✅ Found' : '❌ Missing');
+        });
+    </script>
 </body>
 </html>
