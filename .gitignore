@@ -12,3 +12,14 @@ pom.xml.asc
 .lein-failures
 .nrepl-port
 .cpcache/
+
+# Editor files
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# OS files
+Thumbs.db
