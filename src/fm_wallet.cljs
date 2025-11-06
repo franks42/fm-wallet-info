@@ -247,20 +247,41 @@
   (js/setInterval fetch-hash-price! 30000)
   (js/console.log "✅ CLJS: App initialization complete!"))
 
-;; Start the app - WAIT for DOM to be fully ready
-(js/console.log "🎬 CLJS: Script loaded, waiting for DOM ready...")
+;; Start the app - WAIT for all dependencies to be ready
+(js/console.log "🎬 CLJS: Script loaded, checking dependencies...")
+
+(defn dependencies-ready? []
+  (let [reagent-core (exists? r/atom)
+        reagent-dom (exists? rdom/render)
+        dom-ready (not= js/document.readyState "loading")
+        app-element (.getElementById js/document "app")]
+    (js/console.log "🔍 CLJS: Checking dependencies:"
+                    "Reagent core:" reagent-core
+                    "Reagent DOM:" reagent-dom
+                    "DOM ready:" dom-ready
+                    "#app exists:" (boolean app-element))
+    (and reagent-core reagent-dom dom-ready app-element)))
 
 (defn start-app []
-  (js/console.log "🎬 CLJS: DOM ready event fired!")
+  (js/console.log "🎬 CLJS: ✅ All dependencies ready!")
   (js/console.log "🎬 CLJS: About to call init()...")
   (init)
   (js/console.log "🎬 CLJS: init() call completed"))
 
-;; Use DOMContentLoaded to ensure everything is ready
-(if (= (.-readyState js/document) "loading")
-  (do
-    (js/console.log "🎬 CLJS: Waiting for DOMContentLoaded...")
-    (.addEventListener js/document "DOMContentLoaded" start-app))
-  (do
-    (js/console.log "🎬 CLJS: DOM already ready, starting immediately...")
-    (start-app)))
+(defn wait-for-dependencies
+  "Poll for dependencies to be ready, then start app"
+  ([]
+   (wait-for-dependencies 0))
+  ([attempt]
+   (if (dependencies-ready?)
+     (start-app)
+     (if (< attempt 100)
+       (do
+         (when (zero? (mod attempt 10))
+           (js/console.log "🎬 CLJS: Still waiting for dependencies... attempt" attempt))
+         (js/setTimeout #(wait-for-dependencies (inc attempt)) 50))
+       (js/console.error "❌ CLJS: Timeout waiting for dependencies after 5 seconds!")))))
+
+;; Start the dependency check
+(js/console.log "🎬 CLJS: Starting dependency wait loop...")
+(wait-for-dependencies)
