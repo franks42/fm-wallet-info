@@ -3,15 +3,21 @@
   (:require [reagent.core :as r]
             [reagent.dom :as rdom]))
 
+(js/console.log "📦 CLJS: Namespace fm-wallet loading...")
+(js/console.log "📦 CLJS: Reagent core:", (if r "✅ Found" "❌ Missing"))
+(js/console.log "📦 CLJS: Reagent dom:", (if rdom "✅ Found" "❌ Missing"))
+
 ;; ============================================================================
 ;; State Management
 ;; ============================================================================
 
+(js/console.log "📦 CLJS: Creating app-state atom...")
 (defonce app-state
   (r/atom {:loading? true
            :error nil
            :hash-data nil
            :last-updated nil}))
+(js/console.log "✅ CLJS: app-state created:", @app-state)
 
 ;; ============================================================================
 ;; Figure Markets API
@@ -22,23 +28,30 @@
 (defn fetch-hash-price!
   "Fetch HASH price from Figure Markets API"
   []
-  (js/console.log "🚀 Fetching HASH price from Figure Markets...")
+  (js/console.log "🚀 CLJS: fetch-hash-price! called")
+  (js/console.log "🚀 CLJS: API URL:", figure-markets-api)
   (swap! app-state assoc :loading? true :error nil)
+  (js/console.log "🚀 CLJS: State updated to loading")
 
   (-> (js/fetch figure-markets-api)
       (.then (fn [response]
-               (js/console.log "📡 Response status:" (.-status response))
+               (js/console.log "📡 CLJS: Got response, status:" (.-status response) "ok:" (.-ok response))
                (if (.-ok response)
-                 (.json response)
+                 (do
+                   (js/console.log "📡 CLJS: Response OK, parsing JSON...")
+                   (.json response))
                  (throw (js/Error. (str "HTTP Error: " (.-status response)))))))
       (.then (fn [data]
-               (js/console.log "✅ Data received:" data)
-               (let [markets (.-data data)
-                     hash-market (->> markets
-                                     (filter #(= (.-symbol %) "HASH-USD"))
-                                     first)]
-                 (if hash-market
-                   (let [hash-info {:symbol (.-symbol hash-market)
+               (js/console.log "✅ CLJS: JSON parsed, data received")
+               (js/console.log "✅ CLJS: Data keys:", (js/Object.keys data))
+               (let [markets (.-data data)]
+                 (js/console.log "✅ CLJS: Markets array length:" (.-length markets))
+                 (let [hash-market (->> markets
+                                       (filter #(= (.-symbol %) "HASH-USD"))
+                                       first)]
+                   (js/console.log "✅ CLJS: HASH-USD market:" (if hash-market "Found" "NOT FOUND"))
+                   (if hash-market
+                     (let [hash-info {:symbol (.-symbol hash-market)
                                    :price (js/parseFloat (.-midMarketPrice hash-market))
                                    :change-24h (* (js/parseFloat (.-percentageChange24h hash-market)) 100)
                                    :volume-24h (js/parseFloat (.-volume24h hash-market))
@@ -48,18 +61,22 @@
                                    :ask (js/parseFloat (.-bestAsk hash-market))
                                    :last-price (js/parseFloat (.-lastTradedPrice hash-market))
                                    :trades-24h (js/parseInt (.-tradeCount24h hash-market))}]
-                     (js/console.log "📊 HASH data:" (clj->js hash-info))
-                     (swap! app-state assoc
-                            :hash-data hash-info
-                            :loading? false
-                            :last-updated (js/Date.)))
-                   (do
-                     (js/console.error "❌ HASH-USD market not found in response")
-                     (swap! app-state assoc
-                            :loading? false
-                            :error "HASH-USD market not found"))))))
+                       (js/console.log "📊 CLJS: HASH data extracted:" (clj->js hash-info))
+                       (js/console.log "📊 CLJS: Updating app-state with HASH data...")
+                       (swap! app-state assoc
+                              :hash-data hash-info
+                              :loading? false
+                              :last-updated (js/Date.))
+                       (js/console.log "✅ CLJS: App state updated successfully, loading=false"))
+                     (do
+                       (js/console.error "❌ CLJS: HASH-USD market not found in response")
+                       (swap! app-state assoc
+                              :loading? false
+                              :error "HASH-USD market not found")))))))
       (.catch (fn [error]
-                (js/console.error "❌ Error fetching HASH price:" error)
+                (js/console.error "❌ CLJS: Fetch error occurred")
+                (js/console.error "❌ CLJS: Error message:", (.-message error))
+                (js/console.error "❌ CLJS: Error object:", error)
                 (swap! app-state assoc
                        :loading? false
                        :error (.-message error))))))
@@ -208,18 +225,29 @@
 ;; ============================================================================
 
 (defn ^:dev/after-load mount-root []
-  (js/console.log "🎯 Mounting React root...")
-  (rdom/render [main-view]
-               (.getElementById js/document "app")))
+  (js/console.log "🎯 CLJS: mount-root called")
+  (let [app-element (.getElementById js/document "app")]
+    (if app-element
+      (do
+        (js/console.log "🎯 CLJS: Found #app element")
+        (js/console.log "🎯 CLJS: Rendering Reagent component...")
+        (rdom/render [main-view] app-element)
+        (js/console.log "✅ CLJS: Reagent render complete"))
+      (js/console.error "❌ CLJS: #app element NOT FOUND"))))
 
 (defn init []
-  (js/console.log "🚀 Initializing Figure Markets HASH tracker...")
+  (js/console.log "🚀 CLJS: init function called")
+  (js/console.log "🚀 CLJS: Calling mount-root...")
   (mount-root)
+  (js/console.log "🚀 CLJS: Calling fetch-hash-price...")
   (fetch-hash-price!)
 
   ;; Auto-refresh every 30 seconds
+  (js/console.log "🚀 CLJS: Setting up 30s auto-refresh interval...")
   (js/setInterval fetch-hash-price! 30000)
-  (js/console.log "✅ App initialized with 30s auto-refresh"))
+  (js/console.log "✅ CLJS: App initialization complete!"))
 
 ;; Start the app
+(js/console.log "🎬 CLJS: About to call init()...")
 (init)
+(js/console.log "🎬 CLJS: init() call completed")
