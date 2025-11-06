@@ -247,7 +247,20 @@
   (js/setInterval fetch-hash-price! 30000)
   (js/console.log "✅ CLJS: App initialization complete!"))
 
-;; Start the app
-(js/console.log "🎬 CLJS: About to call init()...")
-(init)
-(js/console.log "🎬 CLJS: init() call completed")
+;; Start the app - WAIT for DOM to be fully ready
+(js/console.log "🎬 CLJS: Script loaded, waiting for DOM ready...")
+
+(defn start-app []
+  (js/console.log "🎬 CLJS: DOM ready event fired!")
+  (js/console.log "🎬 CLJS: About to call init()...")
+  (init)
+  (js/console.log "🎬 CLJS: init() call completed"))
+
+;; Use DOMContentLoaded to ensure everything is ready
+(if (= (.-readyState js/document) "loading")
+  (do
+    (js/console.log "🎬 CLJS: Waiting for DOMContentLoaded...")
+    (.addEventListener js/document "DOMContentLoaded" start-app))
+  (do
+    (js/console.log "🎬 CLJS: DOM already ready, starting immediately...")
+    (start-app)))
