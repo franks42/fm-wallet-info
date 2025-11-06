@@ -23,3 +23,11 @@ pom.xml.asc
 
 # OS files
 Thumbs.db
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Test results
+test-results/
+playwright-report/

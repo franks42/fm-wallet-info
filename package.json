@@ -1,0 +1,19 @@
+{
+  "name": "fm-wallet-info",
+  "version": "1.0.0",
+  "description": "A simple, pure Scittle/ClojureScript application that fetches and displays live HASH token prices from the Figure Markets exchange.",
+  "main": "test-debug.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:16327/git/franks42/fm-wallet-info"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  }
+}
