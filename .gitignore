@@ -32,3 +32,6 @@ package-lock.json
 # Test artifacts
 live-screenshot.png
 debug-screenshot.png
+test-*.spec.js
+test-*.png
+test-results/
