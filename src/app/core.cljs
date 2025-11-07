@@ -99,14 +99,18 @@
          :error-handler (fn [_] (js/console.error "❌ Liquid balance error"))
          :response-format :json :keywords? true})
 
-      ;; Fetch committed amount
+      ;; Fetch committed amount (may fail due to CORS or no exchange account)
       (GET (str base-url "/fetch_available_committed_amount/" wallet-address)
         {:handler (fn [resp]
                     (js/console.log "✅ Committed amount received")
                     (swap! results update :count inc)
                     (swap! results assoc-in [:data :committed] (:available_committed_amount resp))
                     (check-complete))
-         :error-handler (fn [_] (js/console.error "❌ Committed amount error"))
+         :error-handler (fn [_]
+                          (js/console.log "ℹ️ No committed amount (no exchange account or CORS)")
+                          (swap! results update :count inc)
+                          (swap! results assoc-in [:data :committed] {:amount 0 :denom "nhash"})
+                          (check-complete))
          :response-format :json :keywords? true})
 
       ;; Fetch vesting data (may fail for non-vesting accounts - that's okay)
@@ -243,7 +247,8 @@
   [:div {:class "space-y-6"}
    ;; Balance Overview Section
    [:div {:class "bg-gray-800 border border-green-500 rounded-lg p-8"}
-    [:h2 {:class "text-2xl font-bold text-green-400 mb-4"} "Balance Overview"]
+    [:h2 {:class "text-2xl font-bold text-green-400 mb-4"} "HASH Holdings"]
+    [:p {:class "text-gray-400 text-sm mb-4"} "Formula: Total Owned = Liquid + Committed + Unvested"]
     [:table {:class "w-full text-left"}
      [:thead
       [:tr {:class "border-b border-gray-700"}
@@ -251,25 +256,33 @@
        [:th {:class "py-2 text-gray-400 text-right"} "Amount"]]]
      [:tbody
       [:tr {:class "border-b border-gray-700"}
-       [:td {:class "py-3 text-gray-400"} "Liquid Balance"]
+       [:td {:class "py-3 text-gray-400"}
+        [:div "Liquid (in wallet)"]
+        [:div {:class "text-xs text-gray-500"} "Unrestricted, not delegated"]]
        [:td {:class "py-3 text-white text-right"} (str (nhash->hash liquid-amt) " HASH")]]
       [:tr {:class "border-b border-gray-700"}
-       [:td {:class "py-3 text-gray-400"} "Committed Amount"]
+       [:td {:class "py-3 text-gray-400"}
+        [:div "Committed (to exchange)"]
+        [:div {:class "text-xs text-gray-500"} "Available for trading"]]
        [:td {:class "py-3 text-white text-right"} (str (nhash->hash committed-amt) " HASH")]]
 
       ;; Show unvested if present (only restricted hash that matters)
       (when (and vesting (> unvested-amt 0))
         [:tr {:class "border-b border-gray-700"}
-         [:td {:class "py-3 text-gray-400"} "Unvested Amount"]
+         [:td {:class "py-3 text-gray-400"}
+          [:div "Unvested"]
+          [:div {:class "text-xs text-gray-500"} "Restricted (can only delegate)"]]
          [:td {:class "py-3 text-yellow-400 text-right"} (str (nhash->hash unvested-amt) " HASH")]])
 
       [:tr {:class "border-b border-gray-700"}
-       [:td {:class "py-3 text-gray-400"} "Total Delegated"]
+       [:td {:class "py-3 text-gray-400"}
+        [:div "Delegated (with validators)"]
+        [:div {:class "text-xs text-gray-500"} "Staked, not in wallet"]]
        [:td {:class "py-3 text-purple-400 text-right"} (str (nhash->hash delegated-amt) " HASH")]]
 
       ;; Total row
       [:tr {:class "border-t-2 border-green-500 font-bold"}
-       [:td {:class "py-3 text-green-300"} "WALLET TOTAL"]
+       [:td {:class "py-3 text-green-300"} "TOTAL OWNED"]
        [:td {:class "py-3 text-green-300 text-right text-xl"} (str (nhash->hash total-amt) " HASH")]]]]]
 
    ;; Delegation Details Section

@@ -24,11 +24,11 @@ async function testWallet(browser, walletType, walletAddress) {
 
   // Check for all expected sections
   const checks = [
-    ['Balance Overview', 'Balance overview section'],
-    ['Liquid Balance', 'Liquid balance field'],
-    ['Committed Amount', 'Committed amount field'],
-    ['Total Delegated', 'Total delegated field'],
-    ['WALLET TOTAL', 'Wallet total calculation'],
+    ['HASH Holdings', 'HASH holdings section'],
+    ['Liquid (in wallet)', 'Liquid field'],
+    ['Committed (to exchange)', 'Committed field'],
+    ['Delegated (with validators)', 'Delegated field'],
+    ['TOTAL OWNED', 'Total owned calculation'],
     ['Delegation Details', 'Delegation details section'],
     ['Validators', 'Validators count'],
     ['Staked', 'Staked amount'],
@@ -48,7 +48,7 @@ async function testWallet(browser, walletType, walletAddress) {
   // Check for unvested field only on vesting wallet
   // (vested is not shown - once vested, it becomes regular liquid hash)
   if (walletType === 'VESTING') {
-    if (appText.includes('Unvested Amount')) {
+    if (appText.includes('Unvested')) {
       console.log('✅ Unvested amount present');
       passCount++;
     } else {

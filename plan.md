@@ -504,6 +504,105 @@ unvested_hash = vesting_total_unvested_amount (if vesting account)
 
 ---
 
+## Provenance HASH Accounting (Data Dictionary)
+
+### ⚠️ Critical Understanding: Wallet vs. Validators
+
+**HASH can exist in TWO locations:**
+1. **In Wallet**: Available for immediate use (transfer, trade, commit)
+2. **With Validators**: Delegated for staking (managed by validators, requires unbonding to use)
+
+**Key Insight**: Even though delegated HASH is "owned" by the wallet, it has been delegated to validators and is NOT freely available. It must be undelegated first (21-day unbonding period) before it can be used for transfers, trading, or committing to exchange.
+
+---
+
+### Base Amounts (from API)
+
+**liquid-hash**
+Unrestricted HASH in wallet, not delegated (can be transferred, traded, committed, or delegated)
+
+**committed-hash**
+HASH committed to Figure Markets exchange, not delegated (available for trading, can uncommit instantly)
+
+**unvested-hash**
+Total HASH under vesting restrictions (may be in wallet OR delegated to validators, can only be delegated)
+
+**delegated-hash**
+Total HASH staked with validators (NOT in wallet, managed by validators on your behalf, requires 21-day unbonding)
+
+**vested-hash**
+Amount that completed vesting (informational only - now part of liquid, not a separate category)
+
+### Wallet Operations
+
+**Commit**: liquid → committed (instant, makes HASH available for exchange trading)
+**Uncommit**: committed → liquid (instant, cancels pending orders, returns to wallet)
+**Delegate**: liquid/committed/unvested → delegated (moves to validators, requires 21-day unbonding to reverse)
+**Undelegate**: delegated → unbonding (21 days) → liquid/committed (returns to wallet after period)
+
+---
+
+### Wallet-Available Amounts (What's In Your Wallet)
+
+**wallet-unrestricted-hash**
+Formula: `liquid + committed` (if delegated ≤ unvested)
+Formula: `liquid + committed - (delegated - unvested)` (if delegated > unvested)
+Meaning: Unrestricted HASH actually in your wallet, available for immediate use
+
+**wallet-restricted-hash**
+Formula: `max(0, unvested - delegated)`
+Meaning: Unvested HASH in wallet (must delegate to earn rewards, cannot transfer/trade)
+
+**wallet-available-hash** ⭐ (Total in Wallet)
+Formula: `liquid + committed + max(0, unvested - delegated)`
+Meaning: All HASH physically in your wallet (both restricted and unrestricted)
+
+---
+
+### Total Owned (Wallet + Validators)
+
+**total-owned-hash** ⭐ (Grand Total)
+Formula: `liquid + committed + unvested`
+Meaning: All HASH you own (in wallet + with validators)
+
+**Alternative formula**: `wallet-available + delegated`
+Both formulas produce the same result.
+
+---
+
+### Understanding the unvested/delegated Relationship
+
+**Scenario 1: unvested > delegated**
+- Some unvested HASH is in wallet: `unvested - delegated`
+- All delegated HASH could be unvested (earning rewards on restricted HASH)
+- Wallet unrestricted: `liquid + committed`
+- Wallet restricted: `unvested - delegated`
+
+**Scenario 2: delegated > unvested**
+- No unvested HASH in wallet (all delegated to validators)
+- Some delegated HASH is unrestricted: `delegated - unvested`
+- Can undelegate `(delegated - unvested)` to increase wallet availability
+- Wallet unrestricted: `liquid + committed - (delegated - unvested)`
+- Wallet restricted: `0`
+
+**Why this matters**: You cannot simply add liquid + committed + unvested + delegated because delegated is a SUBSET of the other categories, not an additional category.
+
+---
+
+### Vesting Restrictions Explained
+
+**Vesting restrictions** on HASH mean:
+- ❌ Cannot be traded on exchange
+- ❌ Cannot be transferred to another wallet
+- ❌ Cannot leave the wallet
+- ✅ Can ONLY be delegated to validators (to earn staking rewards)
+
+**Vesting events**: At each vesting event, a portion of HASH loses these restrictions. No new HASH is added - restrictions are simply removed from existing HASH.
+
+**vested-hash amount**: Informational only. Shows how much has completed vesting. This HASH is now part of liquid balance. Formula: `original-vesting = vested + unvested`
+
+---
+
 ## Reference Projects
 
 ### figure-fm-hash-prices
