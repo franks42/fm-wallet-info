@@ -204,7 +204,8 @@ Do not use optimistic language ("production-ready", "fully functional", "complet
   - ✅ Phase 1: Hello World with Scittle/CLJS
   - ✅ Phase 2: HASH price from Figure Markets API
   - ✅ Atom-based state management
-  - ✅ Native fetch API integration
+  - ✅ cljs-ajax integration (ajax.core/GET)
+  - ✅ Scittle plugins: cljs-ajax, promesa
   - ✅ Loading/success/error UI states
   - ✅ Playwright tests for both phases
   - ✅ All tests passing!
@@ -217,8 +218,9 @@ Do not use optimistic language ("production-ready", "fully functional", "complet
 - ✅ Phase 1 complete - Hello World working
 - ✅ Phase 2 complete - HASH price fetching and display
 - ✅ Babashka server serving static files
-- ✅ Scittle/CLJS loading correctly
-- ✅ Figure Markets API integration
+- ✅ Scittle/CLJS loading correctly with plugins (cljs-ajax, promesa)
+- ✅ Figure Markets API integration using cljs-ajax
+- ✅ Idiomatic Clojure HTTP requests with ajax.core/GET
 - ✅ Playwright tests passing (test-hello.js, test-hash-price.js) 
 
 ### Recent Tags History (Last 5)
@@ -274,26 +276,47 @@ fm-wallet-info/
 
 ### Scittle Script Loading Pattern
 
-**From reference project (figure-fm-hash-prices):**
+**Current project setup:**
 
 ```html
 <!-- 1. Tailwind CSS first -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- 2. Base Scittle and extensions (with defer) -->
+<!-- 2. Base Scittle (with defer) -->
 <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.js"></script>
+
+<!-- 3. Scittle Plugins -->
 <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.cljs-ajax.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.promesa.js"></script>
 
-<!-- 3. React (if using Reagent) -->
-<script defer crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script defer crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
-<!-- 4. Scittle React wrappers -->
-<script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.reagent.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.re-frame.js"></script>
-
-<!-- 5. Application CLJS files -->
+<!-- 4. Application CLJS files -->
 <script type="application/x-scittle" src="src/app/core.cljs"></script>
+```
+
+**Available Scittle Plugins (from CDN):**
+- scittle.js (core - required)
+- scittle.cljs-ajax.js (HTTP requests - ajax.core namespace) ✅ Using
+- scittle.promesa.js (Promise-based async) ✅ Using
+- scittle.reagent.js (React wrapper - requires React)
+- scittle.re-frame.js (State management - requires Reagent)
+- scittle.replicant.js (Alternative React wrapper)
+- scittle.pprint.js (Pretty printing)
+- scittle.nrepl.js (REPL connectivity)
+
+**Example usage in CLJS:**
+
+```clojure
+(ns app.core
+  (:require [ajax.core :refer [GET POST]]))
+
+;; Idiomatic Clojure HTTP request
+(GET "https://api.example.com/data"
+  {:handler (fn [response]
+              (js/console.log "Success:" response))
+   :error-handler (fn [error]
+                    (js/console.error "Error:" error))
+   :response-format :json
+   :keywords? true})
 ```
 
 ### Playwright Test Pattern

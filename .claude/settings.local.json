@@ -19,7 +19,9 @@
       "Bash(git tag:*)",
       "Bash(git push:*)",
       "Bash(curl:*)",
-      "Bash(node test-hash-price.js:*)"
+      "Bash(node test-hash-price.js:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nPhase 2 Complete: HASH Price Display from Figure Markets\n\n- Updated src/app/core.cljs to fetch HASH price from Figure Markets API\n- Implemented atom-based state management with three states: loading, success, error\n- Added native JavaScript fetch API integration (no external libraries)\n- Created responsive UI showing HASH price with large, clear format\n- Added error handling with user-friendly messages\n- Created test-hash-price.js Playwright test\n- All tests passing: HASH price $0.0300 displays correctly\n- Updated index.html version to 0.2.0\n\nAPI Integration:\n- Endpoint: https://www.figuremarkets.com/service-hft-exchange/api/v1/markets\n- Extracts HASH-USD midMarketPrice from response\n- Displays with 4 decimal precision\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "WebFetch(domain:babashka.org)"
     ]
   },
   "enableAllProjectMcpServers": true,

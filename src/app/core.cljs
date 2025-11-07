@@ -1,4 +1,5 @@
-(ns app.core)
+(ns app.core
+  (:require [ajax.core :refer [GET]]))
 
 ;; State
 (defonce state (atom {:status :loading
@@ -35,34 +36,43 @@
                       <p class='text-gray-500 text-sm mt-4'>Please try refreshing the page</p>
                     </div>"))))))
 
-;; Fetch HASH price from Figure Markets
+;; Fetch HASH price from Figure Markets using cljs-ajax
 (defn fetch-hash-price []
-  (js/console.log "🚀 Fetching HASH price from Figure Markets...")
+  (js/console.log "🚀 Fetching HASH price from Figure Markets (using cljs-ajax)...")
 
-  (-> (js/fetch "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets")
-      (.then (fn [response]
-               (js/console.log "📡 Response status:" (.-status response))
-               (if (.-ok response)
-                 (.json response)
-                 (throw (js/Error. (str "HTTP error: " (.-status response)))))))
-      (.then (fn [data]
-               (js/console.log "✅ Data received, parsing...")
-               (let [markets (js->clj (.-data data) :keywordize-keys true)
-                     hash-market (first (filter #(= (:symbol %) "HASH-USD") markets))]
-                 (if hash-market
-                   (let [price (js/parseFloat (:midMarketPrice hash-market))]
-                     (js/console.log "💰 HASH price:" price)
-                     (swap! state assoc
-                            :status :success
-                            :hash-price (.toFixed price 4))
-                     (render))
-                   (throw (js/Error. "HASH-USD not found in markets data"))))))
-      (.catch (fn [error]
-                (js/console.error "❌ Error fetching HASH price:" error)
-                (swap! state assoc
-                       :status :error
-                       :error (.-message error))
-                (render)))))
+  (GET "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets"
+    {:handler (fn [response]
+                (js/console.log "✅ Data received from Figure Markets")
+                (js/console.log "📊 Response contains" (count (:data response)) "markets")
+
+                (let [markets (:data response)
+                      hash-market (first (filter #(= (:symbol %) "HASH-USD") markets))]
+                  (if hash-market
+                    (let [price (js/parseFloat (:midMarketPrice hash-market))]
+                      (js/console.log "💰 HASH price:" price)
+                      (swap! state assoc
+                             :status :success
+                             :hash-price (.toFixed price 4))
+                      (render))
+                    (do
+                      (js/console.error "❌ HASH-USD not found in markets data")
+                      (swap! state assoc
+                             :status :error
+                             :error "HASH-USD market not found")
+                      (render)))))
+
+     :error-handler (fn [error]
+                      (js/console.error "❌ Error fetching HASH price:" error)
+                      (let [error-msg (or (:status-text error)
+                                          (:last-error error)
+                                          "Network error")]
+                        (swap! state assoc
+                               :status :error
+                               :error error-msg)
+                        (render)))
+
+     :response-format :json
+     :keywords? true}))
 
 ;; Initialize the app
 (defn init []

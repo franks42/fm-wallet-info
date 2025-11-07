@@ -94,7 +94,10 @@ GET https://www.figuremarkets.com/service-hft-exchange/api/v1/markets
 ```
 
 **Implementation Details**:
-- Uses native JavaScript `fetch` API (no external HTTP library needed)
+- Uses cljs-ajax (ajax.core/GET) for idiomatic Clojure HTTP requests
+- Scittle plugins: scittle.cljs-ajax.js and scittle.promesa.js
+- Automatic JSON parsing with `:keywords? true`
+- Handler/error-handler pattern for async responses
 - Parses response to find HASH-USD market
 - Extracts `midMarketPrice` field
 - Displays price with 4 decimal places
@@ -160,7 +163,9 @@ GET https://www.figuremarkets.com/service-hft-exchange/api/v1/markets
 - ✅ Implemented atom-based state management
 - ✅ Added three UI states: loading, success, error
 - ✅ Created test-hash-price.js Playwright test
-- ✅ All tests passing!
+- ✅ Switched from native js/fetch to cljs-ajax for idiomatic Clojure
+- ✅ Added scittle.cljs-ajax.js and scittle.promesa.js plugins
+- ✅ All tests passing with new AJAX implementation!
 
 **Test Results**:
 ```
