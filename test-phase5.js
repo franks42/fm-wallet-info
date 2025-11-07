@@ -45,14 +45,9 @@ async function testWallet(browser, walletType, walletAddress) {
     }
   });
 
-  // Check for vesting fields only on vesting wallet
+  // Check for unvested field only on vesting wallet
+  // (vested is not shown - once vested, it becomes regular liquid hash)
   if (walletType === 'VESTING') {
-    if (appText.includes('Vested Amount')) {
-      console.log('✅ Vested amount present');
-      passCount++;
-    } else {
-      console.log('❌ Vested amount MISSING');
-    }
     if (appText.includes('Unvested Amount')) {
       console.log('✅ Unvested amount present');
       passCount++;
@@ -61,7 +56,7 @@ async function testWallet(browser, walletType, walletAddress) {
     }
   }
 
-  console.log(`\n${walletType} Result: ${passCount}/${checks.length + (walletType === 'VESTING' ? 2 : 0)} checks passed`);
+  console.log(`\n${walletType} Result: ${passCount}/${checks.length + (walletType === 'VESTING' ? 1 : 0)} checks passed`);
 
   await page.close();
   return passCount;
@@ -79,9 +74,9 @@ async function testWallet(browser, walletType, walletAddress) {
 
   console.log('\n=== Summary ===');
   console.log(`NO_VESTING wallet: ${noVestingPasses}/9 checks passed`);
-  console.log(`VESTING wallet: ${vestingPasses}/11 checks passed`);
+  console.log(`VESTING wallet: ${vestingPasses}/10 checks passed`);
 
-  if (noVestingPasses >= 8 && vestingPasses >= 10) {
+  if (noVestingPasses >= 8 && vestingPasses >= 9) {
     console.log('\n✅ Phase 5 PASSED');
     process.exit(0);
   } else {

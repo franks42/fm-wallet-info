@@ -230,15 +230,15 @@
       vesting (:vesting wallet-data)
       delegation (:delegation wallet-data)
 
-      ;; Calculate totals (all in nhash)
+      ;; Calculate amounts (all in nhash)
       liquid-amt (get liquid :amount 0)
       committed-amt (get committed :amount 0)
-      vested-amt (get vesting :vesting_total_vested_amount 0)
       unvested-amt (get vesting :vesting_total_unvested_amount 0)
       delegated-amt (get-in delegation [:delegated_total_delegated_amount :amount] 0)
 
-      ;; Total = liquid + committed + vested + unvested + delegated
-      total-amt (+ liquid-amt committed-amt vested-amt unvested-amt delegated-amt)]
+      ;; Wallet Total = liquid + committed + unvested
+      ;; (delegated is subset of above, vested becomes liquid)
+      total-amt (+ liquid-amt committed-amt unvested-amt)]
 
   [:div {:class "space-y-6"}
    ;; Balance Overview Section
@@ -257,15 +257,11 @@
        [:td {:class "py-3 text-gray-400"} "Committed Amount"]
        [:td {:class "py-3 text-white text-right"} (str (nhash->hash committed-amt) " HASH")]]
 
-      ;; Show vesting info if present
-      (when vesting
-        [:<>
-         [:tr {:class "border-b border-gray-700"}
-          [:td {:class "py-3 text-gray-400"} "Vested Amount"]
-          [:td {:class "py-3 text-blue-400 text-right"} (str (nhash->hash vested-amt) " HASH")]]
-         [:tr {:class "border-b border-gray-700"}
-          [:td {:class "py-3 text-gray-400"} "Unvested Amount"]
-          [:td {:class "py-3 text-yellow-400 text-right"} (str (nhash->hash unvested-amt) " HASH")]]])
+      ;; Show unvested if present (only restricted hash that matters)
+      (when (and vesting (> unvested-amt 0))
+        [:tr {:class "border-b border-gray-700"}
+         [:td {:class "py-3 text-gray-400"} "Unvested Amount"]
+         [:td {:class "py-3 text-yellow-400 text-right"} (str (nhash->hash unvested-amt) " HASH")]])
 
       [:tr {:class "border-b border-gray-700"}
        [:td {:class "py-3 text-gray-400"} "Total Delegated"]
