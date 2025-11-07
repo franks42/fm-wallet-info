@@ -117,9 +117,9 @@ GET https://www.figuremarkets.com/service-hft-exchange/api/v1/markets
 
 ---
 
-### Phase 3: Wallet Info (PLANNING)
-**Status**: 📋 Planning Phase
-**Goal**: Fetch and display wallet information for given address
+### Phase 3: Wallet Info ✅ COMPLETED
+**Status**: ✅ Complete
+**Goal**: Fetch and display wallet information for given address using Reagent + re-frame
 
 **🔒 CRITICAL SECURITY REQUIREMENTS 🔒**
 
@@ -140,42 +140,95 @@ GET https://www.figuremarkets.com/service-hft-exchange/api/v1/markets
 - No analytics or logging that captures addresses
 - All fetching happens client-side using cljs-ajax
 
-**Implementation Approach**:
+**🔍 CORS Discovery & Solution**:
 
-1. **Concurrent API Fetching**: Use promesa to fetch all 8 wallet endpoints concurrently
-   - All fetches run in parallel for better performance
-   - Wait for all to complete before displaying results
-   - Handle individual fetch failures gracefully
+**The Problem**:
+- **Figure Markets API**: ✅ Has CORS enabled - works directly from browser
+  - URL: `https://www.figuremarkets.com/service-hft-exchange/api/v1/markets`
+  - Direct browser access works fine
+- **Provenance API**: ❌ No CORS headers - browser blocked
+  - URL: `https://service-explorer.provenance.io/api/v2/accounts/{wallet}`
+  - Error: "No 'Access-Control-Allow-Origin' header is present"
+  - Blocks all wallet info fetching from browser
 
-2. **Data Display**:
-   - Simple table showing all HASH amounts (liquid, staked, rewards, etc.)
-   - Each amount shown in both HASH and USD (using current HASH price)
-   - Clear categories: Available, Earning, Committed, Vesting
+**The Solution** (Elegant Accident!):
+- pb-fm-mcp server acts as CORS-enabled proxy
+- Originally built REST API endpoints for testing/debugging MCP functions
+- These REST endpoints have CORS middleware (FastAPI)
+- Server-side fetches to Provenance API (no CORS restrictions)
+- Returns CORS-enabled responses to browser
 
-3. **State Management**:
-   ```clojure
-   (defonce state (atom {:wallet-address nil
-                         :hash-price nil
-                         :wallet-data nil
-                         :status :idle  ; :idle, :loading, :success, :error
-                         :error nil}))
-   ```
+**Proxy Endpoint Used**:
+```
+GET https://pb-fm-mcp-dev.creativeapptitude.com/api/fetch_account_info/{wallet_address}
+```
 
-4. **Key Technical Details**:
-   - Use `promesa.core/all` to wait for concurrent fetches
-   - Convert nhash to HASH: `(/ nhash 1000000000)`
-   - Calculate USD: `(* hash-amount hash-price)`
-   - Aggregate totals client-side per documented formulas
+**Returns**:
+```json
+{
+  "account_type": "BASE_ACCOUNT",
+  "account_is_vesting": true/false,
+  "account_aum": {
+    "amount": "1234567890",
+    "denom": "nhash"
+  }
+}
+```
 
-**Tasks** (see Phase 3 todo list):
-- Design state atom structure ⏳
-- Create wallet input UI ⏳
-- Implement concurrent API fetches (8 endpoints) ⏳
-- Create conversion utilities (nhash→HASH, HASH→USD) ⏳
-- Build simple table display ⏳
-- Add error handling ⏳
-- Create Playwright test ⏳
-- Verify locally ⏳
+**Architecture Benefit**: The REST API layer serves dual purposes:
+1. Easy testing/debugging of MCP functions
+2. CORS-enabled browser access (no separate proxy infrastructure needed!)
+
+**✅ Completed Implementation**:
+
+**1. Architecture Migration**:
+- ✅ Migrated from manual DOM manipulation to **Reagent components**
+- ✅ Implemented **re-frame** for centralized state management
+- ✅ React-based rendering with Hiccup syntax
+- ✅ Proper event handling through React props (no manual `addEventListener`)
+
+**2. Dependencies Added**:
+- ✅ React 18 and ReactDOM (required for Reagent)
+- ✅ Scittle Reagent plugin (`scittle.reagent.js`)
+- ✅ Scittle re-frame plugin (`scittle.re-frame.js`)
+- ✅ Already had cljs-ajax and promesa plugins
+
+**3. State Management (re-frame)**:
+```clojure
+;; App state (via re-frame db)
+{:status :idle           ; :idle, :loading-price, :loading-wallet, :success, :error
+ :hash-price nil         ; Current HASH price
+ :wallet-address ""      ; User input wallet address
+ :wallet-data nil        ; Fetched wallet account info
+ :error nil}             ; Error message
+
+;; Events for state updates
+::initialize, ::update-wallet-address, ::loading-wallet,
+::wallet-success, ::wallet-error, ::loading-price, ::price-success
+
+;; Subscriptions for reactive data
+::status, ::hash-price, ::wallet-address, ::wallet-data, ::error
+```
+
+**4. Reagent Components Built**:
+- ✅ `wallet-input-component` - Text input + Fetch button
+- ✅ `hash-price-component` - Display current HASH price
+- ✅ `wallet-data-component` - Display account info in table
+- ✅ `main-component` - Top-level app component
+
+**5. API Integration**:
+- ✅ HASH price: Direct call to Figure Markets (no CORS issues)
+- ✅ Wallet info: Proxy call via pb-fm-mcp-dev (CORS-enabled)
+- ✅ Error handling for invalid wallets
+- ✅ Loading states for better UX
+
+**Test Results**: ✅ 4/4 Passed
+- ✅ Empty Wallet: Displays correctly
+- ✅ No Vesting Wallet: Displays correctly
+- ✅ Vesting Wallet: Displays correctly
+- ✅ Invalid Wallet: Error handling works
+
+**Version**: 0.6.0
 
 ---
 
@@ -486,17 +539,17 @@ unvested_hash = vesting_total_unvested_amount (if vesting account)
 
 **Last Updated**: 2025-11-07
 
-**Active Phase**: Phase 2 - Hash Price Display ✅ COMPLETE
+**Active Phase**: Phase 3 - Wallet Information ✅ COMPLETE
 
-**Recent Changes** (Phase 2):
-- ✅ Studied Figure Markets API from reference project
-- ✅ Updated src/app/core.cljs with fetch logic
-- ✅ Implemented atom-based state management
-- ✅ Added three UI states: loading, success, error
-- ✅ Created test-hash-price.js Playwright test
-- ✅ Switched from native js/fetch to cljs-ajax for idiomatic Clojure
-- ✅ Added scittle.cljs-ajax.js and scittle.promesa.js plugins
-- ✅ All tests passing with new AJAX implementation!
+**Recent Changes** (Phase 3):
+- ✅ Discovered CORS issue with Provenance API
+- ✅ Found elegant solution: pb-fm-mcp server as CORS proxy
+- ✅ Migrated from manual DOM to Reagent + re-frame architecture
+- ✅ Added React 18, ReactDOM, Reagent, and re-frame dependencies
+- ✅ Complete rewrite of core.cljs with Reagent components
+- ✅ Implemented re-frame events and subscriptions
+- ✅ Created comprehensive Playwright tests for 4 wallet scenarios
+- ✅ All tests passing: 4/4 wallet scenarios validated
 
 **Test Results**:
 ```
@@ -505,13 +558,24 @@ Phase 1:
 
 Phase 2:
 🎉 HASH PRICE TEST PASSED
-✅ HASH price fetched: $0.03
-✅ Price displayed in UI: $0.0300
-✅ Price format correct
+✅ HASH price: $0.0300
+
+Phase 3:
+🎉 WALLET INFO TESTS PASSED
+✅ Empty Wallet: Passed
+✅ No Vesting Wallet: Passed
+✅ Vesting Wallet: Passed
+✅ Invalid Wallet: Passed (error handling)
 ```
 
-**Next Steps (Phase 3)**:
-Discuss with user what wallet information functionality to implement next.
+**Key Achievement**:
+Discovered that pb-fm-mcp server's REST API (originally built for MCP function testing)
+naturally solves browser CORS restrictions - no separate proxy infrastructure needed!
+
+**Next Steps (Phase 4)**:
+- Add remaining 7 API endpoints for complete wallet data
+- Implement concurrent fetching with promesa
+- Display comprehensive wallet information (delegations, rewards, vesting, etc.)
 
 ---
 
