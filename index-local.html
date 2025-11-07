@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Figure Markets - HASH Price v1.0.1 (Local CDN)</title>
+
+    <script>
+        // Version and loading diagnostics
+        window.APP_VERSION = 'v1.0.1-local';
+        console.log('🚀 FM Wallet Info ' + window.APP_VERSION + ' - Starting...');
+        console.log('📍 Page URL:', window.location.href);
+        console.log('⏰ Load Time:', new Date().toISOString());
+        console.log('📦 Mode: LOCAL CDN (all resources served locally)');
+    </script>
+
+    <!-- Tailwind CSS for styling (LOCAL) -->
+    <script src="local-cdn/tailwind/tailwindcss.js"></script>
+    <script>
+        console.log('✅ Tailwind CSS script tag loaded (local)');
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'neon-green': '#00ff88',
+                        'neon-cyan': '#00ccff',
+                        'neon-pink': '#ff00ff',
+                        'neon-red': '#ff4d5a'
+                    },
+                    animation: {
+                        'glow': 'glow 3s ease-in-out infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%, 100%': { filter: 'brightness(1)' },
+                            '50%': { filter: 'brightness(1.2)' }
+                        }
+                    }
+                }
+            }
+        }
+        console.log('✅ Tailwind config applied');
+    </script>
+
+    <!-- Scittle - ClojureScript interpreter for the browser (LOCAL) -->
+    <script defer src="local-cdn/scittle/scittle.js"
+            onload="console.log('✅ Scittle core loaded (local)')"
+            onerror="console.error('❌ FAILED to load Scittle core (local)')"></script>
+    <script defer src="local-cdn/scittle/scittle.cljs-ajax.js"
+            onload="console.log('✅ Scittle AJAX loaded (local)')"
+            onerror="console.error('❌ FAILED to load Scittle AJAX (local)')"></script>
+    <script defer crossorigin src="local-cdn/react/react.production.min.js"
+            onload="console.log('✅ React loaded (local)')"
+            onerror="console.error('❌ FAILED to load React (local)')"></script>
+    <script defer crossorigin src="local-cdn/react/react-dom.production.min.js"
+            onload="console.log('✅ ReactDOM loaded (local)')"
+            onerror="console.error('❌ FAILED to load ReactDOM (local)')"></script>
+    <script defer src="local-cdn/scittle/scittle.reagent.js"
+            onload="console.log('✅ Scittle Reagent loaded (local)')"
+            onerror="console.error('❌ FAILED to load Scittle Reagent (local)')"></script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white font-sans min-h-screen">
+    <script>console.log('✅ Body tag reached');</script>
+
+    <div class="max-w-4xl mx-auto p-8">
+        <header class="text-center mb-12 pt-8">
+            <h1 class="text-5xl md:text-6xl font-black mb-3 bg-gradient-to-r from-neon-green via-neon-cyan to-neon-pink bg-clip-text text-transparent animate-glow">
+                Figure Markets
+            </h1>
+            <p class="text-gray-400 text-lg">Live HASH Price Tracker</p>
+            <p class="text-gray-600 text-xs mt-2">🏠 Local CDN Mode</p>
+        </header>
+
+        <div id="app" class="flex justify-center items-center min-h-[400px]">
+            <div class="text-gray-400 animate-pulse-slow">
+                <svg class="animate-spin h-12 w-12 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="text-center">Loading HASH price...</p>
+            </div>
+        </div>
+
+        <footer class="text-center mt-12 text-gray-500 text-sm">
+            <p>Data from <a href="https://www.figuremarkets.com" target="_blank" class="text-neon-cyan hover:text-neon-green transition-colors">Figure Markets Exchange</a></p>
+            <p class="mt-2">Pure Scittle/ClojureScript • Client-side execution • <span id="version">v1.0.1</span></p>
+        </footer>
+    </div>
+
+    <script>
+        console.log('✅ DOM structure loaded');
+        document.getElementById('version').textContent = window.APP_VERSION;
+    </script>
+
+    <!-- Load ClojureScript Application -->
+    <script type="application/x-scittle" src="src/fm_wallet.cljs"
+            onload="console.log('✅ ClojureScript file loaded - app should initialize')"
+            onerror="console.error('❌ FAILED to load ClojureScript file')"></script>
+
+    <script>
+        console.log('📝 All script tags declared');
+        window.addEventListener('load', function() {
+            console.log('✅ Window load event fired');
+            console.log('🔍 Checking for React:', typeof React !== 'undefined' ? '✅ Found' : '❌ Missing');
+            console.log('🔍 Checking for ReactDOM:', typeof ReactDOM !== 'undefined' ? '✅ Found' : '❌ Missing');
+            console.log('🔍 Checking for scittle:', typeof window.scittle !== 'undefined' ? '✅ Found' : '❌ Missing');
+        });
+    </script>
+</body>
+</html>

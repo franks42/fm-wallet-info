@@ -31,3 +31,7 @@ package-lock.json
 # Test results
 test-results/
 playwright-report/
+
+# Local CDN cache (can be regenerated with curl)
+# Uncomment if you don't want to commit CDN files:
+# local-cdn/
