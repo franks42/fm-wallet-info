@@ -198,31 +198,28 @@ Do not use optimistic language ("production-ready", "fully functional", "complet
 
 ### Current Project Status (2025-11-07)
 - **BRANCH**: main
-- **LAST TAG**: None yet
-- **PHASE**: Phase 1 - Hello World ✅ COMPLETE
+- **LAST TAG**: v0.1.0 (Phase 1)
+- **PHASE**: Phase 2 - Hash Price Display ✅ COMPLETE
 - **COMPLETED**:
-  - ✅ Project structure created
-  - ✅ plan.md with project roadmap
-  - ✅ CLAUDE.md with best practices
-  - ✅ Reference project cloned to tmp/
-  - ✅ index.html with Scittle/CLJS setup
-  - ✅ src/app/core.cljs hello world app
-  - ✅ Babashka server (server.bb) using http-kit
-  - ✅ Babashka test runner (run-test.bb)
-  - ✅ Playwright test (test-hello.js)
+  - ✅ Phase 1: Hello World with Scittle/CLJS
+  - ✅ Phase 2: HASH price from Figure Markets API
+  - ✅ Atom-based state management
+  - ✅ Native fetch API integration
+  - ✅ Loading/success/error UI states
+  - ✅ Playwright tests for both phases
   - ✅ All tests passing!
 
-- **NEXT** (Phase 2):
-  - Fetch HASH price from Figure Markets API
-  - Display price in UI
-  - Add error handling
-  - Create test-hash-price.js
+- **NEXT** (Phase 3):
+  - Discuss wallet information functionality
+  - TBD based on user requirements
 
 ### What's Working Now
 - ✅ Phase 1 complete - Hello World working
+- ✅ Phase 2 complete - HASH price fetching and display
 - ✅ Babashka server serving static files
 - ✅ Scittle/CLJS loading correctly
-- ✅ Playwright tests passing 
+- ✅ Figure Markets API integration
+- ✅ Playwright tests passing (test-hello.js, test-hash-price.js) 
 
 ### Recent Tags History (Last 5)
 No tags yet - starting fresh 

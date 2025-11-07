@@ -14,7 +14,12 @@
       "WebFetch(domain:book.babashka.org)",
       "WebFetch(domain:gist.github.com)",
       "Bash(cat:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nPhase 1 Complete: Hello World with Scittle/CLJS\n\n- Created index.html with Scittle/ClojureScript setup\n- Added src/app/core.cljs hello world application\n- Implemented Babashka HTTP server (server.bb) using http-kit\n- Created Babashka test runner (run-test.bb)\n- Added Playwright test (test/test-hello.js)\n- All tests passing locally\n- Added .nojekyll for GitHub Pages compatibility\n- Created plan.md and CLAUDE.md documentation\n\nReady for GitHub Pages deployment.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git tag:*)",
+      "Bash(git push:*)",
+      "Bash(curl:*)",
+      "Bash(node test-hash-price.js:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
