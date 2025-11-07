@@ -1,6 +1,5 @@
 (ns app.core
-  (:require [reagent.core :as r]
-            [reagent.dom :as rdom]
+  (:require [reagent.dom :as rdom]
             [re-frame.core :as rf]
             [ajax.core :refer [GET]]))
 
@@ -68,38 +67,61 @@
 ;; API Calls
 ;; =============================================================================
 
-(defn fetch-wallet-complete-summary [wallet-address]
-  (js/console.log "🔍 Fetching complete wallet summary for:" wallet-address)
+(defn fetch-all-wallet-data [wallet-address]
+  (js/console.log "🔍 Fetching wallet data from multiple endpoints for:" wallet-address)
   (rf/dispatch [::loading-wallet])
 
-  ;; Use comprehensive summary endpoint - gets everything in one call
-  (GET (str "https://pb-fm-mcp-dev.creativeapptitude.com/api/fetch_complete_wallet_summary/" wallet-address)
-    {:handler (fn [response]
-                (js/console.log "✅ Complete wallet summary received" response)
-                ;; Summary returns: account_info, is_vesting, vesting_data,
-                ;; available_committed, delegation_summary
-                (let [account-info (:account_info response)
-                      delegation (:delegation_summary response)
-                      wallet-data {:accountType (:account_type account-info)
-                                  :isVesting (:account_is_vesting account-info)
-                                  :aum (:account_aum account-info)
-                                  :delegation delegation}]
-                  (rf/dispatch [::wallet-success wallet-data])))
+  (let [base-url "https://pb-fm-mcp-dev.creativeapptitude.com/api"
+        results (atom {:count 0 :data {}})]
 
-     :error-handler (fn [error]
-                      (js/console.error "❌ Error fetching wallet summary:" error)
-                      (js/console.log "Error keys:" (js->clj (js/Object.keys error)))
-                      (let [error-msg (try
-                                       (or (get error "status-text")
-                                           (get error :status-text)
-                                           (.-statusText error)
-                                           (str "HTTP Error: " (or (get error "status") (get error :status) "Unknown")))
-                                       (catch js/Error e
-                                         "Failed to fetch wallet information"))]
-                        (rf/dispatch [::wallet-error error-msg])))
+    (letfn [(check-complete []
+              (when (= (:count @results) 4)
+                (js/console.log "✅ All wallet data received" @results)
+                (rf/dispatch [::wallet-success (:data @results)])))]
 
-     :response-format :json
-     :keywords? true}))
+      ;; Fetch delegation data
+      (GET (str base-url "/fetch_total_delegation_data/" wallet-address)
+        {:handler (fn [resp]
+                    (js/console.log "✅ Delegation data received")
+                    (swap! results update :count inc)
+                    (swap! results assoc-in [:data :delegation] resp)
+                    (check-complete))
+         :error-handler (fn [_] (js/console.error "❌ Delegation error"))
+         :response-format :json :keywords? true})
+
+      ;; Fetch liquid balance
+      (GET (str base-url "/wallet_liquid_balance/" wallet-address)
+        {:handler (fn [resp]
+                    (js/console.log "✅ Liquid balance received")
+                    (swap! results update :count inc)
+                    (swap! results assoc-in [:data :liquid] (:wallet_liquid_balance resp))
+                    (check-complete))
+         :error-handler (fn [_] (js/console.error "❌ Liquid balance error"))
+         :response-format :json :keywords? true})
+
+      ;; Fetch committed amount
+      (GET (str base-url "/fetch_available_committed_amount/" wallet-address)
+        {:handler (fn [resp]
+                    (js/console.log "✅ Committed amount received")
+                    (swap! results update :count inc)
+                    (swap! results assoc-in [:data :committed] (:available_committed_amount resp))
+                    (check-complete))
+         :error-handler (fn [_] (js/console.error "❌ Committed amount error"))
+         :response-format :json :keywords? true})
+
+      ;; Fetch vesting data (may fail for non-vesting accounts - that's okay)
+      (GET (str base-url "/fetch_vesting_total_unvested_amount/" wallet-address)
+        {:handler (fn [resp]
+                    (js/console.log "✅ Vesting data received")
+                    (swap! results update :count inc)
+                    (swap! results assoc-in [:data :vesting] resp)
+                    (check-complete))
+         :error-handler (fn [_]
+                          (js/console.log "ℹ️ No vesting data (expected for non-vesting accounts)")
+                          (swap! results update :count inc)
+                          (swap! results assoc-in [:data :vesting] nil)
+                          (check-complete))
+         :response-format :json :keywords? true}))))
 
 (defn fetch-hash-price []
   (js/console.log "🚀 Fetching HASH price from Figure Markets...")
@@ -164,7 +186,7 @@
       [:button {:id "fetch-wallet-data-button"
                 :disabled loading?
                 :on-click #(when-not (empty? wallet-address)
-                            (fetch-wallet-complete-summary wallet-address))
+                            (fetch-all-wallet-data wallet-address))
                 :class "px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold disabled:bg-gray-600 disabled:cursor-not-allowed"}
        (if loading? "Loading..." "Fetch Data")]]]))
 
@@ -203,57 +225,84 @@
        [:p {:class "text-gray-500 text-sm mt-4"} "Please check the wallet address and try again"]]
 
       wallet-data
-      [:div {:class "space-y-6"}
-       ;; Account Info Section
-       [:div {:class "bg-gray-800 border border-green-500 rounded-lg p-8"}
-        [:h2 {:class "text-2xl font-bold text-green-400 mb-4"} "Account Information"]
-        [:table {:class "w-full text-left"}
-         [:thead
-          [:tr {:class "border-b border-gray-700"}
-           [:th {:class "py-2 text-gray-400"} "Property"]
-           [:th {:class "py-2 text-gray-400"} "Value"]]]
-         [:tbody
-          [:tr {:class "border-b border-gray-700"}
-           [:td {:class "py-3 text-gray-400"} "Account Type"]
-           [:td {:class "py-3 text-white font-mono"} (:accountType wallet-data)]]
-          [:tr {:class "border-b border-gray-700"}
-           [:td {:class "py-3 text-gray-400"} "Is Vesting"]
-           [:td {:class "py-3 text-white"} (if (:isVesting wallet-data) "✅ Yes" "❌ No")]]
-          [:tr
-           [:td {:class "py-3 text-gray-400"} "Assets Under Management"]
-           [:td {:class "py-3 text-white"} (str "$" (get-in wallet-data [:aum :amount] "0"))]]]]]
+(let [liquid (:liquid wallet-data)
+      committed (:committed wallet-data)
+      vesting (:vesting wallet-data)
+      delegation (:delegation wallet-data)
 
-       ;; Delegation Section
-       (let [delegation (:delegation wallet-data)]
-         (when delegation
-           [:div {:class "bg-gray-800 border border-purple-500 rounded-lg p-8"}
-            [:h2 {:class "text-2xl font-bold text-purple-400 mb-4"} "Delegation Summary"]
-            [:table {:class "w-full text-left"}
-             [:thead
-              [:tr {:class "border-b border-gray-700"}
-               [:th {:class "py-2 text-gray-400"} "Category"]
-               [:th {:class "py-2 text-gray-400 text-right"} "Amount"]]]
-             [:tbody
-              [:tr {:class "border-b border-gray-700"}
-               [:td {:class "py-3 text-gray-400"} "Validators"]
-               [:td {:class "py-3 text-white text-right"} (:staking_validators delegation)]]
-              [:tr {:class "border-b border-gray-700"}
-               [:td {:class "py-3 text-gray-400"} "Staked"]
-               [:td {:class "py-3 text-white text-right"} (format-delegation-amount (:delegated_staked_amount delegation))]]
-              [:tr {:class "border-b border-gray-700"}
-               [:td {:class "py-3 text-gray-400"} "Rewards"]
-               [:td {:class "py-3 text-green-400 text-right"} (format-delegation-amount (:delegated_rewards_amount delegation))]]
-              [:tr {:class "border-b border-gray-700"}
-               [:td {:class "py-3 text-gray-400"} "Unbonding"]
-               [:td {:class "py-3 text-yellow-400 text-right"} (format-delegation-amount (:delegated_unbonding_amount delegation))]]
-              [:tr {:class "border-b border-gray-700"}
-               [:td {:class "py-3 text-gray-400"} "Redelegated"]
-               [:td {:class "py-3 text-white text-right"} (format-delegation-amount (:delegated_redelegated_amount delegation))]]
-              [:tr {:class "border-b border-gray-700 font-bold"}
-               [:td {:class "py-3 text-gray-300"} "Total Delegated"]
-               [:td {:class "py-3 text-purple-400 text-right"} (format-delegation-amount (:delegated_total_delegated_amount delegation))]]]]]))
+      ;; Calculate totals (all in nhash)
+      liquid-amt (get liquid :amount 0)
+      committed-amt (get committed :amount 0)
+      vested-amt (get vesting :vesting_total_vested_amount 0)
+      unvested-amt (get vesting :vesting_total_unvested_amount 0)
+      delegated-amt (get-in delegation [:delegated_total_delegated_amount :amount] 0)
 
-       [:p {:class "text-gray-500 text-xs mt-4"} "✅ Wallet information loaded"]]
+      ;; Total = liquid + committed + vested + unvested + delegated
+      total-amt (+ liquid-amt committed-amt vested-amt unvested-amt delegated-amt)]
+
+  [:div {:class "space-y-6"}
+   ;; Balance Overview Section
+   [:div {:class "bg-gray-800 border border-green-500 rounded-lg p-8"}
+    [:h2 {:class "text-2xl font-bold text-green-400 mb-4"} "Balance Overview"]
+    [:table {:class "w-full text-left"}
+     [:thead
+      [:tr {:class "border-b border-gray-700"}
+       [:th {:class "py-2 text-gray-400"} "Category"]
+       [:th {:class "py-2 text-gray-400 text-right"} "Amount"]]]
+     [:tbody
+      [:tr {:class "border-b border-gray-700"}
+       [:td {:class "py-3 text-gray-400"} "Liquid Balance"]
+       [:td {:class "py-3 text-white text-right"} (str (nhash->hash liquid-amt) " HASH")]]
+      [:tr {:class "border-b border-gray-700"}
+       [:td {:class "py-3 text-gray-400"} "Committed Amount"]
+       [:td {:class "py-3 text-white text-right"} (str (nhash->hash committed-amt) " HASH")]]
+
+      ;; Show vesting info if present
+      (when vesting
+        [:<>
+         [:tr {:class "border-b border-gray-700"}
+          [:td {:class "py-3 text-gray-400"} "Vested Amount"]
+          [:td {:class "py-3 text-blue-400 text-right"} (str (nhash->hash vested-amt) " HASH")]]
+         [:tr {:class "border-b border-gray-700"}
+          [:td {:class "py-3 text-gray-400"} "Unvested Amount"]
+          [:td {:class "py-3 text-yellow-400 text-right"} (str (nhash->hash unvested-amt) " HASH")]]])
+
+      [:tr {:class "border-b border-gray-700"}
+       [:td {:class "py-3 text-gray-400"} "Total Delegated"]
+       [:td {:class "py-3 text-purple-400 text-right"} (str (nhash->hash delegated-amt) " HASH")]]
+
+      ;; Total row
+      [:tr {:class "border-t-2 border-green-500 font-bold"}
+       [:td {:class "py-3 text-green-300"} "WALLET TOTAL"]
+       [:td {:class "py-3 text-green-300 text-right text-xl"} (str (nhash->hash total-amt) " HASH")]]]]]
+
+   ;; Delegation Details Section
+   (when delegation
+     [:div {:class "bg-gray-800 border border-purple-500 rounded-lg p-8"}
+      [:h2 {:class "text-2xl font-bold text-purple-400 mb-4"} "Delegation Details"]
+      [:table {:class "w-full text-left"}
+       [:thead
+        [:tr {:class "border-b border-gray-700"}
+         [:th {:class "py-2 text-gray-400"} "Category"]
+         [:th {:class "py-2 text-gray-400 text-right"} "Amount"]]]
+       [:tbody
+        [:tr {:class "border-b border-gray-700"}
+         [:td {:class "py-3 text-gray-400"} "Validators"]
+         [:td {:class "py-3 text-white text-right"} (:staking_validators delegation)]]
+        [:tr {:class "border-b border-gray-700"}
+         [:td {:class "py-3 text-gray-400"} "Staked"]
+         [:td {:class "py-3 text-white text-right"} (format-delegation-amount (:delegated_staked_amount delegation))]]
+        [:tr {:class "border-b border-gray-700"}
+         [:td {:class "py-3 text-gray-400"} "Rewards"]
+         [:td {:class "py-3 text-green-400 text-right"} (format-delegation-amount (:delegated_rewards_amount delegation))]]
+        [:tr {:class "border-b border-gray-700"}
+         [:td {:class "py-3 text-gray-400"} "Unbonding"]
+         [:td {:class "py-3 text-yellow-400 text-right"} (format-delegation-amount (:delegated_unbonding_amount delegation))]]
+        [:tr {:class "border-b border-gray-700"}
+         [:td {:class "py-3 text-gray-400"} "Redelegated"]
+         [:td {:class "py-3 text-white text-right"} (format-delegation-amount (:delegated_redelegated_amount delegation))]]]]])
+
+   [:p {:class "text-gray-500 text-xs mt-4"} "✅ Wallet information loaded"]])
 
       :else
       [:div {:class "bg-gray-800 border border-gray-600 rounded-lg p-8"}
