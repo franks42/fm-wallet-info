@@ -103,12 +103,66 @@ fm-wallet-info/
 # Run specific test
 bb run-test.bb test-hash-price.js
 
+# Run wallet test with real wallet address (secure)
+export TEST_WALLET_ADDRESS="pb1your_wallet_address_here"
+bb run-test.bb test-wallet-info.js
+
 # Manual server
 bb server.bb 8000
 
 # Run test directly (server must be running)
 cd test && node test-hash-price.js
 ```
+
+### Testing with Real Wallet Addresses
+
+**CRITICAL**: Real wallet addresses are confidential and must never be stored in files or committed to git.
+
+**Secure Testing Protocol**:
+1. User sets environment variable: `export WALLET_NO_VESTING="pb1..."`
+2. Playwright test reads from `process.env.WALLET_NO_VESTING`
+3. Test fills wallet input field with the address
+4. Test verifies data displays correctly
+5. Environment variable only exists in current shell session
+6. No persistence, no storage, no commits
+
+**Test Wallet Environment Variables**:
+```bash
+# Different test scenarios (user sets these)
+export WALLET_EMPTY="pb1..."           # Empty wallet (no HASH holdings)
+export WALLET_NO_VESTING="pb1..."      # Normal wallet without vesting
+export WALLET_VESTING="pb1..."         # Wallet with vesting schedule
+export WALLET_INVALID="not_a_wallet"   # Invalid wallet address format
+```
+
+**Playwright Test Pattern**:
+```javascript
+// Test different scenarios
+const scenarios = [
+  { name: 'Empty Wallet', env: 'WALLET_EMPTY' },
+  { name: 'No Vesting', env: 'WALLET_NO_VESTING' },
+  { name: 'Vesting Account', env: 'WALLET_VESTING' },
+  { name: 'Invalid Address', env: 'WALLET_INVALID' }
+];
+
+for (const scenario of scenarios) {
+  const address = process.env[scenario.env];
+  if (!address) {
+    console.warn(`⚠️ ${scenario.env} not set, skipping test`);
+    continue;
+  }
+
+  await page.fill('#wallet-address-input', address);
+  await page.click('#fetch-wallet-data-button');
+  // Verify results based on scenario...
+}
+```
+
+**Test Coverage**:
+- ✅ **WALLET_EMPTY**: Verify UI handles zero balances gracefully
+- ✅ **WALLET_NO_VESTING**: Verify normal wallet with delegations, liquid balance
+- ✅ **WALLET_VESTING**: Verify vesting calculations and display
+- ✅ **WALLET_INVALID**: Verify error handling for invalid addresses
 
 ## Git Tags
 

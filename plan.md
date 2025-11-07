@@ -43,10 +43,15 @@ fm-wallet-info/
 │       └── views.cljs     # UI components (future)
 ├── test/
 │   ├── test-hello.js      # Basic page load test
-│   ├── test-hash-price.js # Hash price fetch test (future)
+│   ├── test-hash-price.js # Hash price fetch test
+│   ├── test-wallet-info.js # Wallet info test (future)
 │   └── package.json       # Playwright dependencies
+├── test-wallet-apis.bb    # Babashka API endpoint tests
+├── server.bb              # Babashka HTTP server
+├── run-test.bb            # Babashka test runner
 ├── plan.md                # This file
 ├── CLAUDE.md              # AI assistant guidelines
+├── context.md             # Critical context preservation
 └── README.md              # User documentation
 ```
 
@@ -135,7 +140,314 @@ GET https://www.figuremarkets.com/service-hft-exchange/api/v1/markets
 - No analytics or logging that captures addresses
 - All fetching happens client-side using cljs-ajax
 
-**Details**: TBD - awaiting user requirements for specific wallet data to display
+**Implementation Approach**:
+
+1. **Concurrent API Fetching**: Use promesa to fetch all 8 wallet endpoints concurrently
+   - All fetches run in parallel for better performance
+   - Wait for all to complete before displaying results
+   - Handle individual fetch failures gracefully
+
+2. **Data Display**:
+   - Simple table showing all HASH amounts (liquid, staked, rewards, etc.)
+   - Each amount shown in both HASH and USD (using current HASH price)
+   - Clear categories: Available, Earning, Committed, Vesting
+
+3. **State Management**:
+   ```clojure
+   (defonce state (atom {:wallet-address nil
+                         :hash-price nil
+                         :wallet-data nil
+                         :status :idle  ; :idle, :loading, :success, :error
+                         :error nil}))
+   ```
+
+4. **Key Technical Details**:
+   - Use `promesa.core/all` to wait for concurrent fetches
+   - Convert nhash to HASH: `(/ nhash 1000000000)`
+   - Calculate USD: `(* hash-amount hash-price)`
+   - Aggregate totals client-side per documented formulas
+
+**Tasks** (see Phase 3 todo list):
+- Design state atom structure ⏳
+- Create wallet input UI ⏳
+- Implement concurrent API fetches (8 endpoints) ⏳
+- Create conversion utilities (nhash→HASH, HASH→USD) ⏳
+- Build simple table display ⏳
+- Add error handling ⏳
+- Create Playwright test ⏳
+- Verify locally ⏳
+
+---
+
+## Wallet API Reference (from pb-fm-mcp)
+
+### API Endpoints Overview
+
+All endpoints are from **Provenance Blockchain Explorer API** and **Figure Markets API**.
+Wallet address is passed as path parameter in format: `{wallet_address}` (Bech32 format).
+
+### 1. Account Information
+
+**Endpoint**: `https://service-explorer.provenance.io/api/v2/accounts/{wallet_address}`
+
+**Purpose**: Get account type, vesting status, and AUM
+
+**Returns**:
+```json
+{
+  "flags": {
+    "isVesting": true/false
+  },
+  "accountType": "BASE_ACCOUNT",
+  "accountAum": {
+    "amount": "1234567890",
+    "denom": "nhash"
+  }
+}
+```
+
+**Key Fields**:
+- `flags.isVesting` - Boolean: Is this a vesting account?
+- `accountType` - String: Account type
+- `accountAum` - Object: Assets under management
+
+---
+
+### 2. Vesting Information
+
+**Endpoint**: `https://service-explorer.provenance.io/api/v3/accounts/{wallet_address}/vesting`
+
+**Purpose**: Get vesting schedule and calculate vested/unvested amounts
+
+**Returns**:
+```json
+{
+  "originalVestingList": [
+    {
+      "amount": "1000000000000",
+      "denom": "nhash"
+    }
+  ],
+  "startTime": "2024-01-01T00:00:00Z",
+  "endTime": "2026-01-01T00:00:00Z"
+}
+```
+
+**Calculations** (done client-side):
+- `vesting_original_amount` - Total HASH subject to vesting
+- `vesting_total_vested_amount` - Amount vested as of current date (linear schedule)
+- `vesting_total_unvested_amount` - Amount still vesting (not yet available)
+
+**Formula**:
+```
+if now < start_time: vested = 0
+if now > end_time: vested = original_amount
+else: vested = original_amount * (now - start_time) / (end_time - start_time)
+unvested = original_amount - vested
+```
+
+---
+
+### 3. Delegation: Staked Amount
+
+**Endpoint**: `https://service-explorer.provenance.io/api/v2/accounts/{wallet_address}/delegations`
+
+**Purpose**: Get staked HASH with validators (earning rewards)
+
+**Returns**:
+```json
+{
+  "total": 5,
+  "rollupTotals": {
+    "bondedTotal": {
+      "amount": "5000000000",
+      "denom": "nhash"
+    }
+  }
+}
+```
+
+**Key Fields**:
+- `total` - Number of validators staked with
+- `rollupTotals.bondedTotal.amount` - Total staked HASH (earns rewards)
+
+---
+
+### 4. Delegation: Rewards
+
+**Endpoint**: `https://service-explorer.provenance.io/api/v2/accounts/{wallet_address}/rewards`
+
+**Purpose**: Get earned rewards from staking (can be claimed immediately)
+
+**Returns**:
+```json
+{
+  "total": [
+    {
+      "amount": "123456789",
+      "denom": "nhash"
+    }
+  ]
+}
+```
+
+**Key Fields**:
+- `total[0].amount` - Total rewards earned (can claim immediately)
+
+---
+
+### 5. Delegation: Unbonding
+
+**Endpoint**: `https://service-explorer.provenance.io/api/v2/accounts/{wallet_address}/unbonding`
+
+**Purpose**: Get HASH that is unbonding (21-day waiting period, no rewards)
+
+**Returns**:
+```json
+{
+  "rollupTotals": {
+    "unbondingTotal": {
+      "amount": "2000000000",
+      "denom": "nhash"
+    }
+  }
+}
+```
+
+**Key Fields**:
+- `rollupTotals.unbondingTotal.amount` - Total unbonding HASH
+
+---
+
+### 6. Delegation: Redelegation
+
+**Endpoint**: `https://service-explorer.provenance.io/api/v2/accounts/{wallet_address}/redelegations`
+
+**Purpose**: Get HASH being redelegated between validators (earns rewards, 21-day period)
+
+**Returns**:
+```json
+{
+  "rollupTotals": {
+    "redelegationTotal": {
+      "amount": "1000000000",
+      "denom": "nhash"
+    }
+  }
+}
+```
+
+**Key Fields**:
+- `rollupTotals.redelegationTotal.amount` - Total redelegated HASH
+
+---
+
+### 7. Liquid Balance
+
+**Endpoint**: `https://service-explorer.provenance.io/api/v2/accounts/{wallet_address}/balances?count=20&page=1`
+
+**Purpose**: Get liquid HASH available in wallet (not delegated or committed)
+
+**Returns**:
+```json
+{
+  "results": [
+    {
+      "denom": "nhash",
+      "amount": "10000000000"
+    }
+  ]
+}
+```
+
+**Key Fields**:
+- Find entry where `denom === "nhash"`
+- `amount` - Liquid HASH available for immediate use
+
+---
+
+### 8. Committed Amount (Figure Markets Exchange)
+
+**Endpoint**: `https://api.provenance.io/provenance/exchange/v1/commitments/account/{wallet_address}`
+
+**Purpose**: Get HASH committed to Figure Markets exchange
+
+**Returns**:
+```json
+{
+  "commitments": [
+    {
+      "market_id": 1,
+      "amount": [
+        {
+          "denom": "nhash",
+          "amount": "5000000000"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Key Fields**:
+- Filter for `market_id === 1` (Figure Markets)
+- Find entry where `denom === "nhash"`
+- `amount` - HASH committed to exchange
+
+---
+
+### Aggregated Delegation Summary
+
+**Calculated client-side from endpoints 3-6**:
+
+```javascript
+delegated_earning_amount = staked_amount + redelegated_amount
+delegated_not_earning_amount = rewards_amount + unbonding_amount
+delegated_total_amount = earning_amount + not_earning_amount
+```
+
+**Categories**:
+- **Earning rewards**: Staked + Redelegated
+- **Not earning**: Rewards (claimable) + Unbonding (waiting)
+- **Total delegated**: Sum of all above
+
+---
+
+### HASH Amount Denomination
+
+**CRITICAL**: All amounts returned in **nhash** (nano-HASH)
+
+**Conversion**:
+```
+1 HASH = 1,000,000,000 nhash
+Display HASH = nhash / 1,000,000,000
+```
+
+**Example**:
+```
+nhash: 5000000000 → Display: 5.0000 HASH
+nhash: 123456789 → Display: 0.1235 HASH (rounded to 4 decimals)
+```
+
+---
+
+### Total HASH Holdings Formula
+
+```
+total_hash = liquid_balance
+           + delegated_total_amount
+           + committed_amount
+
+available_hash = liquid_balance
+               + rewards_amount (claimable)
+
+committed_hash = staked_amount
+               + redelegated_amount
+               + unbonding_amount
+               + committed_to_exchange
+
+unvested_hash = vesting_total_unvested_amount (if vesting account)
+```
 
 ---
 
@@ -205,16 +517,48 @@ Discuss with user what wallet information functionality to implement next.
 
 ## Testing Strategy
 
+### API Endpoint Testing (Babashka)
+
+**Before implementing UI, validate all 8 wallet API endpoints:**
+
+```bash
+# Source wallet environment variables
+. ~/.wallet-env.sh
+
+# Run API tests (tests all 4 wallet scenarios)
+bb test-wallet-apis.bb
+```
+
+**What it tests**:
+- All 8 Provenance/Figure Markets API endpoints
+- WALLET_EMPTY - Zero balances (empty wallet)
+- WALLET_NO_VESTING - Normal wallet with holdings
+- WALLET_VESTING - Vesting account with delegations
+- WALLET_INVALID - Error handling for invalid addresses
+
+**Security**: Script only logs environment variable NAMES, never actual wallet addresses.
+
+**Output**: Shows all amounts in nhash, validates API response structures
+
+---
+
 ### Local Development
-1. Start local server: `python3 -m http.server 8000`
+1. Start local server: `bb server.bb 8000`
 2. Open browser: http://localhost:8000
 3. Check console for errors
 4. Verify visual output
 
-### Automated Testing
+### Automated Testing (Playwright)
 1. Install Playwright: `npm install playwright`
-2. Run test: `node test/test-hello.js`
-3. Fix any failures before moving forward
+2. Source wallet env vars: `. ~/.wallet-env.sh`
+3. Run test: `bb run-test.bb test-wallet-info.js`
+4. Fix any failures before moving forward
+
+**Playwright tests use environment variables**:
+- Reads from WALLET_EMPTY, WALLET_NO_VESTING, etc.
+- Fills wallet input field programmatically
+- Verifies data displays correctly
+- Never stores wallet addresses
 
 ### Deployment Verification
 1. Push to GitHub
