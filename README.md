@@ -1,14 +1,11 @@
-# Figure Markets HASH Price Tracker
+# Figure Markets Simple Wallet Info
 
-A simple, pure Scittle/ClojureScript application that fetches and displays live HASH token prices from the Figure Markets exchange.
+A simple, pure Scittle/ClojureScript application that fetches and displays live wallet account info from the Figure Markets exchange.
 
 ## Features
 
 - 🚀 **Pure Client-Side**: Runs entirely in the browser using Scittle (ClojureScript interpreter)
 - 📊 **Live Data**: Fetches real-time HASH price data from Figure Markets API
-- 🔄 **Auto-Refresh**: Updates price data every 30 seconds
-- 💎 **Beautiful UI**: Modern, responsive design with Tailwind CSS
-- 📈 **Complete Market Data**: Shows price, 24h change, volume, bid/ask spread, and more
 
 ## Requirements
 
@@ -16,6 +13,13 @@ A simple, pure Scittle/ClojureScript application that fetches and displays live 
 - **Modern Browser**: Chrome, Firefox, Safari, or Edge (with JavaScript enabled)
 
 ## Usage
+
+Github pages serves the whole app:
+
+https://franks42.github.io/fm-wallet-info/
+
+
+For local testing:
 
 Simply open `index.html` in a web browser or serve it with any static file server:
 
@@ -49,14 +53,6 @@ This returns market data for all trading pairs, and the app filters for the HASH
 
 ## Data Displayed
 
-- **Current Price**: Mid-market price for HASH-USD
-- **24h Change**: Percentage change over the last 24 hours
-- **24h Volume**: Total trading volume in USD
-- **24h High/Low**: Price range over the last 24 hours
-- **Order Book**: Current best bid and ask prices
-- **Last Trade**: Most recent trade price
-- **Spread**: Difference between best bid and ask
-- **Trade Count**: Number of trades in the last 24 hours
 
 ## Technologies
 
@@ -67,21 +63,9 @@ This returns market data for all trading pairs, and the app filters for the HASH
 
 ## Source Code
 
-- `index.html`: Main HTML file with Scittle dependencies
-- `src/fm_wallet.cljs`: ClojureScript application code
-- `test-cdn.html`: Simple connectivity test for CDN resources
 
 ## Troubleshooting
 
-### App Hangs at "Loading HASH price..."
-
-This usually means CDN resources failed to load. Check:
-
-1. **Internet Connection**: Ensure you have an active internet connection
-2. **Firewall/Proxy**: Corporate firewalls or proxies may block CDNs
-   - Required domains: `cdn.tailwindcss.com`, `cdn.jsdelivr.net`, `unpkg.com`, `figuremarkets.com`
-3. **Browser Console**: Open DevTools (F12) and check for errors
-4. **Test CDN Connectivity**: Open `test-cdn.html` to verify CDN access
 
 ### Deploying to GitHub Pages
 
@@ -94,8 +78,7 @@ See `GITHUB_PAGES_SETUP.md` for deployment instructions.
 
 ## License
 
-MIT
+EPL 2.0
 
 ## Credits
 
-Based on functionality from [figure-fm-hash-prices](https://github.com/franks42/figure-fm-hash-prices), simplified to focus on just HASH price display.
