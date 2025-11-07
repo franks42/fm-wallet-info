@@ -23,3 +23,5 @@ pom.xml.asc
 
 # OS files
 Thumbs.db
+tmp/
+node_modules/

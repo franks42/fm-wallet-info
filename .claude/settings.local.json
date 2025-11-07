@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(.gitignore)",
+      "Bash(git clone:*)",
+      "Bash(npm install)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(chmod:*)",
+      "Bash(bb:*)",
+      "WebSearch",
+      "WebFetch(domain:book.babashka.org)",
+      "WebFetch(domain:gist.github.com)",
+      "Bash(cat:*)",
+      "Bash(git add:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "memory"
+  ]
+}

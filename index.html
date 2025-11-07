@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FM Wallet Info</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'neon-green': '#00ff41',
+                        'neon-cyan': '#00ffff',
+                        'neon-pink': '#ff0080'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Scittle Base -->
+    <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.js"></script>
+
+    <!-- Application CLJS -->
+    <script type="application/x-scittle" src="src/app/core.cljs?v=0.1.0"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="max-w-4xl mx-auto p-8">
+        <header class="text-center mb-12">
+            <h1 class="text-5xl font-bold mb-4 bg-gradient-to-r from-neon-green to-neon-cyan bg-clip-text text-transparent">
+                FM Wallet Info
+            </h1>
+            <p class="text-gray-400">Figure Markets Wallet Information</p>
+        </header>
+
+        <main>
+            <div id="app" class="text-center">
+                <p class="text-gray-500 text-sm">Loading ClojureScript...</p>
+            </div>
+        </main>
+
+        <footer class="text-center mt-12 text-gray-500 text-sm">
+            <p>Phase 1: Hello World</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "fm-wallet-info-tests",
+  "version": "1.0.0",
+  "description": "Playwright tests for FM Wallet Info",
+  "scripts": {
+    "test": "node test-hello.js",
+    "test:all": "node test-hello.js"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}
