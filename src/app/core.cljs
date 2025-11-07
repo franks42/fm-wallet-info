@@ -86,7 +86,11 @@
                     (swap! results update :count inc)
                     (swap! results assoc-in [:data :delegation] resp)
                     (check-complete))
-         :error-handler (fn [_] (js/console.error "❌ Delegation error"))
+         :error-handler (fn [_]
+                          (js/console.error "❌ Delegation error - using default")
+                          (swap! results update :count inc)
+                          (swap! results assoc-in [:data :delegation] nil)
+                          (check-complete))
          :response-format :json :keywords? true})
 
       ;; Fetch liquid balance
@@ -96,7 +100,11 @@
                     (swap! results update :count inc)
                     (swap! results assoc-in [:data :liquid] (:wallet_liquid_balance resp))
                     (check-complete))
-         :error-handler (fn [_] (js/console.error "❌ Liquid balance error"))
+         :error-handler (fn [_]
+                          (js/console.error "❌ Liquid balance error - using default")
+                          (swap! results update :count inc)
+                          (swap! results assoc-in [:data :liquid] {:amount 0 :denom "nhash"})
+                          (check-complete))
          :response-format :json :keywords? true})
 
       ;; Fetch committed amount (may fail due to CORS or no exchange account)
