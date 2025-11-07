@@ -41,6 +41,39 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **For detailed project planning, architecture, and tasks, see [plan.md](plan.md).**
 
+## 🔒 CRITICAL SECURITY REQUIREMENT 🔒
+
+**WALLET ADDRESS CONFIDENTIALITY - MANDATORY**
+
+Wallet addresses are **CONFIDENTIAL INFORMATION** and must be handled with extreme care:
+
+### Absolute Rules (NEVER VIOLATE):
+
+1. ❌ **NEVER store wallet addresses on any server**
+2. ❌ **NEVER commit wallet addresses to GitHub or any repository**
+3. ❌ **NEVER send wallet addresses to any backend service**
+4. ❌ **NEVER log wallet addresses to console in production**
+5. ❌ **NEVER put wallet addresses in URL parameters**
+6. ❌ **NEVER include wallet addresses in git commits, even in test files**
+
+### Allowed (With Restrictions):
+
+1. ✅ **Keep wallet addresses in browser memory (state atoms)**
+2. ✅ **Local storage ONLY after explicit user consent with clear dialog**
+3. ✅ **Direct client-to-API calls (browser → Figure Markets)**
+4. ✅ **User input via text field (not query strings)**
+
+### Implementation Guidelines:
+
+- **State Management**: Store in atom, never persist by default
+- **User Input**: Text field with clear "not stored on server" message
+- **localStorage**: Require explicit opt-in with consent UI
+- **Clear Data**: Always provide "clear wallet data" button
+- **Testing**: Use placeholder/test addresses, never real ones in code
+- **Documentation**: Never include real wallet addresses in examples
+
+**Violation of these rules is a CRITICAL SECURITY FAILURE.**
+
 ## Key Architecture Concepts
 
 ### Design Philosophy

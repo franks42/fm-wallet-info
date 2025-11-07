@@ -112,11 +112,30 @@ GET https://www.figuremarkets.com/service-hft-exchange/api/v1/markets
 
 ---
 
-### Phase 3: Wallet Info (FUTURE)
-**Status**: ⏸️ Not Started
+### Phase 3: Wallet Info (PLANNING)
+**Status**: 📋 Planning Phase
 **Goal**: Fetch and display wallet information for given address
 
-**Details**: TBD after Phase 2 completion
+**🔒 CRITICAL SECURITY REQUIREMENTS 🔒**
+
+**WALLET ADDRESS CONFIDENTIALITY - MANDATORY:**
+1. ❌ **NEVER store wallet addresses on any server**
+2. ❌ **NEVER commit wallet addresses to GitHub**
+3. ❌ **NEVER send wallet addresses to any backend**
+4. ✅ **Keep wallet addresses in browser memory only**
+5. ✅ **Local storage ONLY with explicit user consent**
+6. ✅ **Pure client-side application - no backend needed**
+7. ✅ **All API calls from browser directly to Figure Markets**
+
+**Implementation Rules:**
+- Wallet address stays in browser state atom only
+- User inputs address in text field (not URL params that get logged)
+- If using localStorage, show consent dialog first
+- Clear localStorage option always available
+- No analytics or logging that captures addresses
+- All fetching happens client-side using cljs-ajax
+
+**Details**: TBD - awaiting user requirements for specific wallet data to display
 
 ---
 

@@ -159,12 +159,54 @@ cd test && node test-hash-price.js
 4. **Destructuring errors**: Use `first`, `second`, `nth` instead
 5. **Script load order**: Scittle plugins must load after scittle.js
 
+## 🔒 CRITICAL SECURITY REQUIREMENT 🔒
+
+**WALLET ADDRESS CONFIDENTIALITY - ABSOLUTELY MANDATORY**
+
+Wallet addresses are **CONFIDENTIAL INFORMATION**. This is not negotiable.
+
+### What You MUST NEVER Do:
+1. ❌ Store wallet addresses on any server
+2. ❌ Commit wallet addresses to GitHub
+3. ❌ Send wallet addresses to any backend
+4. ❌ Log wallet addresses in production
+5. ❌ Put wallet addresses in URL parameters
+6. ❌ Include real wallet addresses in test files
+
+### What You MAY Do:
+1. ✅ Store in browser state atom (memory only)
+2. ✅ Use localStorage ONLY with explicit user consent
+3. ✅ Direct API calls: browser → Figure Markets
+4. ✅ User text input (not URL params)
+5. ✅ Provide "clear data" functionality
+
+### Implementation Pattern:
+
+```clojure
+;; State management
+(defonce state (atom {:wallet-address nil  ; Never persist by default
+                      :wallet-data nil}))
+
+;; Only store if user explicitly consents
+(defn save-to-storage [address]
+  (when (user-consented?)
+    (js/localStorage.setItem "wallet-address" address)))
+
+;; Always provide clear option
+(defn clear-wallet-data []
+  (js/localStorage.removeItem "wallet-address")
+  (swap! state assoc :wallet-address nil))
+```
+
+**This is a fundamental privacy requirement. Violations are unacceptable.**
+
 ## Next Steps for Phase 3
 
 User will define wallet information requirements. Be prepared to:
 - Fetch wallet data from Figure Markets API
 - Display wallet holdings, balances, transactions
-- Handle multiple wallet addresses
+- Handle wallet address input (text field only, no URL params)
+- Implement localStorage consent flow
 - Add more complex UI components
 - Consider using Reagent if UI complexity increases
 
