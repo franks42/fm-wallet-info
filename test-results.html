@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Test Results - FM Wallet Info</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #e0e0e0;
+            background: linear-gradient(135deg, #0a0f1c 0%, #1a1f2e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #00ff88 0%, #00ccff 50%, #ff00ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.8;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 10px 5px;
+            font-size: 0.9em;
+        }
+
+        .badge-success {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 2px solid #00ff88;
+        }
+
+        .badge-warning {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 2px solid #ffc107;
+        }
+
+        .badge-error {
+            background: rgba(255, 77, 90, 0.2);
+            color: #ff4d5a;
+            border: 2px solid #ff4d5a;
+        }
+
+        .section {
+            background: rgba(30, 35, 50, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .section h2 {
+            color: #00ccff;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h3 {
+            color: #00ff88;
+            font-size: 1.3em;
+            margin: 25px 0 15px 0;
+        }
+
+        .screenshot-container {
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid rgba(0, 204, 255, 0.3);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .screenshot-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .screenshot-caption {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            color: #a0a0a0;
+            font-size: 0.9em;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .code-block {
+            background: #1a1f2e;
+            border: 1px solid rgba(255, 77, 90, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .code-block pre {
+            margin: 0;
+            color: #ff4d5a;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .info-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .info-card h4 {
+            color: #00ccff;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .info-card p {
+            color: #c0c0c0;
+            margin: 5px 0;
+        }
+
+        .emoji {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+
+        ul {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        ul li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        ul li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        ul li.error:before {
+            content: "✗";
+            color: #ff4d5a;
+        }
+
+        a {
+            color: #00ccff;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: #00ff88;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: #707070;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎭 Playwright Test Results</h1>
+            <p>FM Wallet Info - Claude Code Environment Testing</p>
+            <div>
+                <span class="status-badge badge-success">✅ Playwright Working</span>
+                <span class="status-badge badge-success">✅ 10/10 Tests Pass</span>
+                <span class="status-badge badge-warning">⚠️ App Bug Found</span>
+            </div>
+        </header>
+
+        <div class="section">
+            <h2><span class="emoji">📸</span>Application Screenshot</h2>
+            <p>This screenshot was captured by Playwright running in the Claude Code environment, proving that browser automation works with the proper workarounds.</p>
+
+            <div class="screenshot-container">
+                <img src="tests/screenshots/app-viewport.png" alt="FM Wallet Info Application Screenshot">
+                <div class="screenshot-caption">
+                    <strong>Viewport Screenshot</strong> - Shows the application as rendered in Chromium browser via Playwright
+                </div>
+            </div>
+
+            <div class="screenshot-container">
+                <img src="tests/screenshots/app-fullpage.png" alt="FM Wallet Info Full Page Screenshot">
+                <div class="screenshot-caption">
+                    <strong>Full Page Screenshot</strong> - Complete page including footer
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">✅</span>What's Working</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>🎨 User Interface</h4>
+                    <p>✅ Beautiful gradient header</p>
+                    <p>✅ Dark theme styling (Tailwind CSS)</p>
+                    <p>✅ Responsive layout</p>
+                    <p>✅ Animated loading spinner</p>
+                </div>
+                <div class="info-card">
+                    <h4>📦 Libraries Loaded</h4>
+                    <p>✅ React 18</p>
+                    <p>✅ ReactDOM 18</p>
+                    <p>✅ Scittle (ClojureScript)</p>
+                    <p>✅ Tailwind CSS</p>
+                </div>
+                <div class="info-card">
+                    <h4>🧪 Test Infrastructure</h4>
+                    <p>✅ Playwright 1.56.1</p>
+                    <p>✅ Local web server</p>
+                    <p>✅ Local CDN resources</p>
+                    <p>✅ Custom TMPDIR fix</p>
+                </div>
+                <div class="info-card">
+                    <h4>🎯 Test Results</h4>
+                    <p>✅ 3/3 Progressive tests</p>
+                    <p>✅ 7/7 Local CDN tests</p>
+                    <p>✅ Screenshot capture</p>
+                    <p>✅ Console log monitoring</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">🐛</span>Issue Discovered</h2>
+            <p>While Playwright and the testing infrastructure work perfectly, we discovered a bug in the application's ClojureScript code that prevents the HASH price from loading.</p>
+
+            <h3>Error Details</h3>
+            <div class="code-block">
+                <pre>Scittle error: Could not resolve symbol: r
+Location: src/fm_wallet.cljs:7:43
+Phase: analysis
+
+Context:
+03    (:require [reagent.core :as r]
+04              [reagent.dom :as rdom]))
+05
+06  (js/console.log "📦 CLJS: Namespace fm-wallet loading...")
+07  (js/console.log "📦 CLJS: Reagent core:", (if r "✅ Found" "❌ Missing"))
+                                              ^--- Could not resolve symbol: r
+08  (js/console.log "📦 CLJS: Reagent dom:", (if rdom "✅ Found" "❌ Missing"))</pre>
+            </div>
+
+            <h3>Root Cause</h3>
+            <p>The code attempts to use namespace aliases (<code>r</code> and <code>rdom</code>) immediately after the <code>:require</code> statement. However, Scittle loads namespaces asynchronously, so these symbols aren't available yet when lines 7-8 execute.</p>
+
+            <h3>Impact</h3>
+            <ul>
+                <li>ClojureScript execution stops at line 7</li>
+                <li class="error">The <code>init()</code> function never runs</li>
+                <li class="error">No API call is made to Figure Markets</li>
+                <li class="error">App remains stuck in "Loading..." state</li>
+            </ul>
+
+            <h3>Fix Required</h3>
+            <p>Remove or relocate the debug console.log statements on lines 7-8 that reference namespace aliases before they're actually used in the code.</p>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">🔧</span>Environment Workarounds</h2>
+            <p>Two critical fixes were required to get Playwright working in the Claude Code environment:</p>
+
+            <h3>1. Custom TMPDIR (Browser Crash Fix)</h3>
+            <ul>
+                <li>Problem: /tmp directory permission issues</li>
+                <li>Symptom: Browser crashes immediately</li>
+                <li>Solution: Export custom TMPDIR=/home/user/PROJECT/.tmp</li>
+            </ul>
+
+            <h3>2. Local CDN Resources (Network Fix)</h3>
+            <ul>
+                <li>Problem: Browser cannot access external CDNs</li>
+                <li>Symptom: ERR_TUNNEL_CONNECTION_FAILED</li>
+                <li>Solution: Download and serve CDN files locally</li>
+            </ul>
+
+            <p>See <a href="CLAUDE_CODE_ENV_GUIDE.md">CLAUDE_CODE_ENV_GUIDE.md</a> for complete documentation.</p>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">📊</span>Test Summary</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>Test Execution</h4>
+                    <p><strong>Total Tests:</strong> 10</p>
+                    <p><strong>Passed:</strong> 10 ✅</p>
+                    <p><strong>Failed:</strong> 0</p>
+                    <p><strong>Success Rate:</strong> 100%</p>
+                </div>
+                <div class="info-card">
+                    <h4>Network</h4>
+                    <p><strong>Local CDN:</strong> ✅ Working</p>
+                    <p><strong>External CDN:</strong> ❌ Blocked</p>
+                    <p><strong>Network Failures:</strong> 0</p>
+                    <p><strong>API Attempts:</strong> 0 (app bug)</p>
+                </div>
+                <div class="info-card">
+                    <h4>Browser</h4>
+                    <p><strong>Chromium:</strong> 141.0.7390.37</p>
+                    <p><strong>Crashes:</strong> 0 (fixed!)</p>
+                    <p><strong>Rendering:</strong> ✅ Perfect</p>
+                    <p><strong>JavaScript:</strong> ✅ Executing</p>
+                </div>
+                <div class="info-card">
+                    <h4>Environment</h4>
+                    <p><strong>Platform:</strong> Linux 4.4.0</p>
+                    <p><strong>Date:</strong> 2025-11-07</p>
+                    <p><strong>Location:</strong> Claude Code Cloud</p>
+                    <p><strong>Status:</strong> ✅ Production Ready</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">📚</span>Documentation</h2>
+            <ul>
+                <li><a href="PLAYWRIGHT_FIX.md">PLAYWRIGHT_FIX.md</a> - Complete solution documentation</li>
+                <li><a href="CLAUDE_CODE_ENV_GUIDE.md">CLAUDE_CODE_ENV_GUIDE.md</a> - Environment limitations guide</li>
+                <li><a href="LOCAL_CDN_TESTING.md">LOCAL_CDN_TESTING.md</a> - Local CDN approach details</li>
+                <li><a href="TEST_RESULTS.md">TEST_RESULTS.md</a> - Initial CDN accessibility testing</li>
+            </ul>
+
+            <h3>Test Scripts</h3>
+            <ul>
+                <li><code>run-playwright.sh</code> - Wrapper script with fixes (use this!)</li>
+                <li><code>curl-test.sh</code> - cURL-based testing (20 tests, 100% pass)</li>
+                <li><code>tests/debug-test.spec.js</code> - Progressive complexity tests</li>
+                <li><code>tests/local-cdn.spec.js</code> - Local CDN comprehensive tests</li>
+                <li><code>tests/external-cdn.spec.js</code> - External CDN limitation test</li>
+                <li><code>tests/capture-app.spec.js</code> - Screenshot capture test</li>
+                <li><code>tests/check-cljs.spec.js</code> - ClojureScript execution test</li>
+            </ul>
+        </div>
+
+        <footer>
+            <p>Generated: 2025-11-07</p>
+            <p>Repository: <a href="https://github.com/franks42/fm-wallet-info">franks42/fm-wallet-info</a></p>
+            <p>Branch: claude/test-cdn-domains-011CUsVTwNdGa2tCD5NUZcy1</p>
+        </footer>
+    </div>
+</body>
+</html>
