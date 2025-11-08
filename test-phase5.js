@@ -24,13 +24,13 @@ async function testWallet(browser, walletType, walletAddress) {
 
   // Check for all expected sections
   const checks = [
-    ['HASH Holdings', 'HASH holdings section'],
-    ['Liquid (in wallet)', 'Liquid field'],
-    ['Committed (to exchange)', 'Committed field'],
-    ['Delegated (with validators)', 'Delegated field'],
-    ['TOTAL OWNED', 'Total owned calculation'],
+    ['Account Balance', 'Account Balance section'],
+    ['Liquid', 'Liquid field'],
+    ['Committed', 'Committed field'],
+    ['Delegated', 'Delegated field'],
+    ['WALLET TOTAL', 'Wallet total calculation'],
     ['Delegation Details', 'Delegation details section'],
-    ['Validators', 'Validators count'],
+    ['TOTAL DELEGATED', 'Total delegated sum'],
     ['Staked', 'Staked amount'],
     ['Rewards', 'Rewards amount']
   ];
@@ -45,8 +45,7 @@ async function testWallet(browser, walletType, walletAddress) {
     }
   });
 
-  // Check for unvested field only on vesting wallet
-  // (vested is not shown - once vested, it becomes regular liquid hash)
+  // Check for unvested and available fields only on vesting wallet
   if (walletType === 'VESTING') {
     if (appText.includes('Unvested')) {
       console.log('✅ Unvested amount present');
@@ -54,9 +53,16 @@ async function testWallet(browser, walletType, walletAddress) {
     } else {
       console.log('❌ Unvested amount MISSING');
     }
+
+    if (appText.includes('AVAILABLE')) {
+      console.log('✅ Available amount present');
+      passCount++;
+    } else {
+      console.log('❌ Available amount MISSING');
+    }
   }
 
-  console.log(`\n${walletType} Result: ${passCount}/${checks.length + (walletType === 'VESTING' ? 1 : 0)} checks passed`);
+  console.log(`\n${walletType} Result: ${passCount}/${checks.length + (walletType === 'VESTING' ? 2 : 0)} checks passed`);
 
   await page.close();
   return passCount;
@@ -74,9 +80,9 @@ async function testWallet(browser, walletType, walletAddress) {
 
   console.log('\n=== Summary ===');
   console.log(`NO_VESTING wallet: ${noVestingPasses}/9 checks passed`);
-  console.log(`VESTING wallet: ${vestingPasses}/10 checks passed`);
+  console.log(`VESTING wallet: ${vestingPasses}/11 checks passed`);
 
-  if (noVestingPasses >= 8 && vestingPasses >= 9) {
+  if (noVestingPasses >= 8 && vestingPasses >= 10) {
     console.log('\n✅ Phase 5 PASSED');
     process.exit(0);
   } else {

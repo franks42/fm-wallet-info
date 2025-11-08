@@ -147,7 +147,7 @@
                   (if hash-market
                     (let [price (js/parseFloat (:midMarketPrice hash-market))]
                       (js/console.log "💰 HASH price:" price)
-                      (rf/dispatch [::price-success (.toFixed price 4)]))
+                      (rf/dispatch [::price-success (.toFixed price 3)]))
                     (js/console.error "❌ HASH-USD not found in markets"))))
 
      :error-handler (fn [error]
@@ -258,15 +258,15 @@
       unvested-amt (get vesting :vesting_total_unvested_amount 0)
       delegated-amt (get-in delegation [:delegated_total_delegated_amount :amount] 0)
 
-      ;; Wallet Total = liquid + committed + unvested
-      ;; (delegated is subset of above, vested becomes liquid)
-      total-amt (+ liquid-amt committed-amt unvested-amt)]
+      ;; Wallet Total = liquid + committed + delegated
+      wallet-total (+ liquid-amt committed-amt delegated-amt)
+      ;; Available = wallet total - unvested
+      available-amt (- wallet-total unvested-amt)]
 
   [:div {:class "space-y-6"}
    ;; Balance Overview Section
    [:div {:class "bg-gray-800 border border-green-500 rounded-lg p-8"}
-    [:h2 {:class "text-2xl font-bold text-green-400 mb-4"} "HASH Holdings"]
-    [:p {:class "text-gray-400 text-sm mb-4"} "Formula: Total Owned = Liquid + Committed + Unvested"]
+    [:h2 {:class "text-2xl font-bold text-green-400 mb-4"} "Account Balance"]
     [:table {:class "w-full text-left"}
      [:thead
       [:tr {:class "border-b border-gray-700"}
@@ -274,34 +274,31 @@
        [:th {:class "py-2 text-gray-400 text-right"} "Amount [HASH]"]]]
      [:tbody
       [:tr {:class "border-b border-gray-700"}
-       [:td {:class "py-3 text-gray-400"}
-        [:div "Liquid (in wallet)"]
-        [:div {:class "text-xs text-gray-500"} "Unrestricted, not delegated"]]
+       [:td {:class "py-3 text-gray-400"} "Liquid"]
        [:td {:class "py-3 text-white text-right" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash liquid-amt)]]
       [:tr {:class "border-b border-gray-700"}
-       [:td {:class "py-3 text-gray-400"}
-        [:div "Committed (to exchange)"]
-        [:div {:class "text-xs text-gray-500"} "Available for trading"]]
+       [:td {:class "py-3 text-gray-400"} "Committed"]
        [:td {:class "py-3 text-white text-right" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash committed-amt)]]
+      [:tr {:class "border-b border-gray-700"}
+       [:td {:class "py-3 text-gray-400"} "Delegated"]
+       [:td {:class "py-3 text-white text-right" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash delegated-amt)]]
 
-      ;; Show unvested if present (only restricted hash that matters)
+      ;; Wallet Total row
+      [:tr {:class "border-t-2 border-gray-600 font-bold"}
+       [:td {:class "py-3 text-gray-300"} "WALLET TOTAL"]
+       [:td {:class "py-3 text-gray-300 text-right text-xl" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash wallet-total)]]
+
+      ;; Show unvested if present
       (when (and vesting (> unvested-amt 0))
         [:tr {:class "border-b border-gray-700"}
-         [:td {:class "py-3 text-gray-400"}
-          [:div "Unvested"]
-          [:div {:class "text-xs text-gray-500"} "Restricted (can only delegate)"]]
+         [:td {:class "py-3 text-gray-400"} "Unvested"]
          [:td {:class "py-3 text-yellow-400 text-right" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash unvested-amt)]])
 
-      [:tr {:class "border-b border-gray-700"}
-       [:td {:class "py-3 text-gray-400"}
-        [:div "Delegated (with validators)"]
-        [:div {:class "text-xs text-gray-500"} "Staked, not in wallet"]]
-       [:td {:class "py-3 text-purple-400 text-right" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash delegated-amt)]]
-
-      ;; Total row
-      [:tr {:class "border-t-2 border-green-500 font-bold"}
-       [:td {:class "py-3 text-green-300"} "TOTAL OWNED"]
-       [:td {:class "py-3 text-green-300 text-right text-xl" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash total-amt)]]]]]
+      ;; Available row (only show if unvested exists)
+      (when (and vesting (> unvested-amt 0))
+        [:tr {:class "border-t-2 border-green-500 font-bold"}
+         [:td {:class "py-3 text-green-300"} "AVAILABLE"]
+         [:td {:class "py-3 text-green-300 text-right text-xl" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash available-amt)]])]]]
 
    ;; Delegation Details Section
    (when delegation
@@ -314,9 +311,6 @@
          [:th {:class "py-2 text-gray-400 text-right"} "Amount [HASH]"]]]
        [:tbody
         [:tr {:class "border-b border-gray-700"}
-         [:td {:class "py-3 text-gray-400"} "Validators"]
-         [:td {:class "py-3 text-white text-right"} (:staking_validators delegation)]]
-        [:tr {:class "border-b border-gray-700"}
          [:td {:class "py-3 text-gray-400"} "Staked"]
          [:td {:class "py-3 text-white text-right" :style {:font-variant-numeric "tabular-nums"}} (format-delegation-amount (:delegated_staked_amount delegation))]]
         [:tr {:class "border-b border-gray-700"}
@@ -327,7 +321,12 @@
          [:td {:class "py-3 text-yellow-400 text-right" :style {:font-variant-numeric "tabular-nums"}} (format-delegation-amount (:delegated_unbonding_amount delegation))]]
         [:tr {:class "border-b border-gray-700"}
          [:td {:class "py-3 text-gray-400"} "Redelegated"]
-         [:td {:class "py-3 text-white text-right" :style {:font-variant-numeric "tabular-nums"}} (format-delegation-amount (:delegated_redelegated_amount delegation))]]]]])
+         [:td {:class "py-3 text-white text-right" :style {:font-variant-numeric "tabular-nums"}} (format-delegation-amount (:delegated_redelegated_amount delegation))]]
+
+        ;; Total Delegated row
+        [:tr {:class "border-t-2 border-purple-500 font-bold"}
+         [:td {:class "py-3 text-purple-300"} "TOTAL DELEGATED"]
+         [:td {:class "py-3 text-purple-300 text-right text-xl" :style {:font-variant-numeric "tabular-nums"}} (format-delegation-amount (:delegated_total_delegated_amount delegation))]]]]])
 
    [:p {:class "text-gray-500 text-xs mt-4"} "✅ Wallet information loaded"]])
 
