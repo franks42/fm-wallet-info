@@ -160,23 +160,33 @@
 ;; Helper Functions
 ;; =============================================================================
 
+(defn format-number-with-commas
+  "Add commas to a number string for thousands separation"
+  [num-str]
+  (let [[whole decimal] (.split num-str ".")
+        with-commas (.replace whole #"\B(?=(\d{3})+(?!\d))" ",")]
+    (if decimal
+      (str with-commas "." decimal)
+      with-commas)))
+
 (defn nhash->hash
-  "Convert nhash (nanohash) to HASH. 1 HASH = 1,000,000,000 nhash"
+  "Convert nhash (nanohash) to HASH with comma formatting. 1 HASH = 1,000,000,000 nhash"
   [nhash-amount]
   (when nhash-amount
     (let [amount-num (if (number? nhash-amount)
                       nhash-amount
-                      (js/parseFloat nhash-amount))]
-      (.toFixed (/ amount-num 1000000000) 2))))
+                      (js/parseFloat nhash-amount))
+          formatted (.toFixed (/ amount-num 1000000000) 2)]
+      (format-number-with-commas formatted))))
 
 (defn format-delegation-amount
-  "Format delegation amount from API response"
+  "Format delegation amount from API response (without HASH suffix)"
   [amount-obj]
   (when amount-obj
     (let [amount (:amount amount-obj)]
       (if (and amount (> amount 0))
-        (str (nhash->hash amount) " HASH")
-        "0 HASH"))))
+        (nhash->hash amount)
+        "0.00"))))
 
 ;; =============================================================================
 ;; Reagent Components (return Hiccup)
@@ -261,18 +271,18 @@
      [:thead
       [:tr {:class "border-b border-gray-700"}
        [:th {:class "py-2 text-gray-400"} "Category"]
-       [:th {:class "py-2 text-gray-400 text-right"} "Amount"]]]
+       [:th {:class "py-2 text-gray-400 text-right"} "Amount [HASH]"]]]
      [:tbody
       [:tr {:class "border-b border-gray-700"}
        [:td {:class "py-3 text-gray-400"}
         [:div "Liquid (in wallet)"]
         [:div {:class "text-xs text-gray-500"} "Unrestricted, not delegated"]]
-       [:td {:class "py-3 text-white text-right"} (str (nhash->hash liquid-amt) " HASH")]]
+       [:td {:class "py-3 text-white text-right" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash liquid-amt)]]
       [:tr {:class "border-b border-gray-700"}
        [:td {:class "py-3 text-gray-400"}
         [:div "Committed (to exchange)"]
         [:div {:class "text-xs text-gray-500"} "Available for trading"]]
-       [:td {:class "py-3 text-white text-right"} (str (nhash->hash committed-amt) " HASH")]]
+       [:td {:class "py-3 text-white text-right" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash committed-amt)]]
 
       ;; Show unvested if present (only restricted hash that matters)
       (when (and vesting (> unvested-amt 0))
@@ -280,18 +290,18 @@
          [:td {:class "py-3 text-gray-400"}
           [:div "Unvested"]
           [:div {:class "text-xs text-gray-500"} "Restricted (can only delegate)"]]
-         [:td {:class "py-3 text-yellow-400 text-right"} (str (nhash->hash unvested-amt) " HASH")]])
+         [:td {:class "py-3 text-yellow-400 text-right" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash unvested-amt)]])
 
       [:tr {:class "border-b border-gray-700"}
        [:td {:class "py-3 text-gray-400"}
         [:div "Delegated (with validators)"]
         [:div {:class "text-xs text-gray-500"} "Staked, not in wallet"]]
-       [:td {:class "py-3 text-purple-400 text-right"} (str (nhash->hash delegated-amt) " HASH")]]
+       [:td {:class "py-3 text-purple-400 text-right" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash delegated-amt)]]
 
       ;; Total row
       [:tr {:class "border-t-2 border-green-500 font-bold"}
        [:td {:class "py-3 text-green-300"} "TOTAL OWNED"]
-       [:td {:class "py-3 text-green-300 text-right text-xl"} (str (nhash->hash total-amt) " HASH")]]]]]
+       [:td {:class "py-3 text-green-300 text-right text-xl" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash total-amt)]]]]]
 
    ;; Delegation Details Section
    (when delegation
@@ -301,23 +311,23 @@
        [:thead
         [:tr {:class "border-b border-gray-700"}
          [:th {:class "py-2 text-gray-400"} "Category"]
-         [:th {:class "py-2 text-gray-400 text-right"} "Amount"]]]
+         [:th {:class "py-2 text-gray-400 text-right"} "Amount [HASH]"]]]
        [:tbody
         [:tr {:class "border-b border-gray-700"}
          [:td {:class "py-3 text-gray-400"} "Validators"]
          [:td {:class "py-3 text-white text-right"} (:staking_validators delegation)]]
         [:tr {:class "border-b border-gray-700"}
          [:td {:class "py-3 text-gray-400"} "Staked"]
-         [:td {:class "py-3 text-white text-right"} (format-delegation-amount (:delegated_staked_amount delegation))]]
+         [:td {:class "py-3 text-white text-right" :style {:font-variant-numeric "tabular-nums"}} (format-delegation-amount (:delegated_staked_amount delegation))]]
         [:tr {:class "border-b border-gray-700"}
          [:td {:class "py-3 text-gray-400"} "Rewards"]
-         [:td {:class "py-3 text-green-400 text-right"} (format-delegation-amount (:delegated_rewards_amount delegation))]]
+         [:td {:class "py-3 text-green-400 text-right" :style {:font-variant-numeric "tabular-nums"}} (format-delegation-amount (:delegated_rewards_amount delegation))]]
         [:tr {:class "border-b border-gray-700"}
          [:td {:class "py-3 text-gray-400"} "Unbonding"]
-         [:td {:class "py-3 text-yellow-400 text-right"} (format-delegation-amount (:delegated_unbonding_amount delegation))]]
+         [:td {:class "py-3 text-yellow-400 text-right" :style {:font-variant-numeric "tabular-nums"}} (format-delegation-amount (:delegated_unbonding_amount delegation))]]
         [:tr {:class "border-b border-gray-700"}
          [:td {:class "py-3 text-gray-400"} "Redelegated"]
-         [:td {:class "py-3 text-white text-right"} (format-delegation-amount (:delegated_redelegated_amount delegation))]]]]])
+         [:td {:class "py-3 text-white text-right" :style {:font-variant-numeric "tabular-nums"}} (format-delegation-amount (:delegated_redelegated_amount delegation))]]]]])
 
    [:p {:class "text-gray-500 text-xs mt-4"} "✅ Wallet information loaded"]])
 
