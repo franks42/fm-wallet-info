@@ -164,7 +164,8 @@
   "Add commas to a number string for thousands separation"
   [num-str]
   (let [[whole decimal] (.split num-str ".")
-        with-commas (.replace whole #"\B(?=(\d{3})+(?!\d))" ",")]
+        regex (js/RegExp. "\\B(?=(\\d{3})+(?!\\d))" "g")
+        with-commas (.replace whole regex ",")]
     (if decimal
       (str with-commas "." decimal)
       with-commas)))
