@@ -45,7 +45,7 @@ async function testWallet(browser, walletType, walletAddress) {
     }
   });
 
-  // Check for unvested and available fields only on vesting wallet
+  // Check for unvested and unrestricted fields only on vesting wallet
   if (walletType === 'VESTING') {
     if (appText.includes('Unvested')) {
       console.log('✅ Unvested amount present');
@@ -54,11 +54,11 @@ async function testWallet(browser, walletType, walletAddress) {
       console.log('❌ Unvested amount MISSING');
     }
 
-    if (appText.includes('AVAILABLE')) {
-      console.log('✅ Available amount present');
+    if (appText.includes('UNRESTRICTED')) {
+      console.log('✅ Unrestricted amount present');
       passCount++;
     } else {
-      console.log('❌ Available amount MISSING');
+      console.log('❌ Unrestricted amount MISSING');
     }
   }
 

@@ -295,10 +295,10 @@
          [:td {:class "py-3 text-gray-400"} "Unvested"]
          [:td {:class "py-3 text-yellow-400 text-right" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash unvested-amt)]])
 
-      ;; Available row (only show if unvested exists)
+      ;; Unrestricted row (only show if unvested exists)
       (when (and vesting (> unvested-amt 0))
         [:tr {:class "border-t-2 border-green-500 font-bold"}
-         [:td {:class "py-3 text-green-300"} "AVAILABLE"]
+         [:td {:class "py-3 text-green-300"} "UNRESTRICTED"]
          [:td {:class "py-3 text-green-300 text-right text-xl" :style {:font-variant-numeric "tabular-nums"}} (nhash->hash available-amt)]])]]]
 
    ;; Delegation Details Section
