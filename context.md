@@ -1,41 +1,279 @@
 # FM Wallet Info - Critical Context
 
-**Last Updated**: 2025-11-07 after Phase 2 completion
+**Last Updated**: 2025-11-08 after Phase 5 display restructure and UNRESTRICTED rename
 
 ## Project Status
 
 - **Phase 1**: ✅ COMPLETE - Hello World with Scittle/CLJS
 - **Phase 2**: ✅ COMPLETE - HASH price display from Figure Markets API using cljs-ajax
-- **Phase 3**: TBD - Wallet information functionality
+- **Phase 3**: ✅ COMPLETE - Wallet information with Reagent + re-frame
+- **Phase 4**: ✅ COMPLETE - Multi-endpoint parallel fetch architecture
+- **Phase 5**: ✅ COMPLETE - All wallet data display with vesting support
+  - ✅ Display restructure: Liquid + Committed + Delegated = WALLET TOTAL
+  - ✅ Vesting accounts show: Unvested → UNRESTRICTED calculation
+  - ✅ Delegation details with TOTAL DELEGATED
+  - ✅ Comma formatting fixed (thousands separator)
+  - ✅ HASH price showing 3 decimals (changed from 4)
 
-## Key Technical Decisions
+## Current Session Changes (2025-11-08)
 
-### Why cljs-ajax Instead of Native fetch
+### 1. Display Restructure
+**User Request**: Reorganize wallet display to show clearer calculations
 
-**User requirement**: "we will be doing a lot of fetching in the near future for this project and I want us to use cljs where we can - use the ajax and promesa cdn packages"
+**Changes Made**:
+- **Account Balance Section**:
+  - Shows: Liquid, Committed, Delegated
+  - These add up to **WALLET TOTAL**
+  - For vesting accounts: shows Unvested below total
+  - Then calculates **UNRESTRICTED** = Wallet Total - Unvested
 
-The reference project (figure-fm-hash-prices) loads scittle.cljs-ajax.js but actually uses native js/fetch in their code. We corrected this to use idiomatic Clojure throughout.
+- **Delegation Details Section**:
+  - Removed "# of validators" (not important at this level)
+  - Shows: Staked, Rewards, Unbonding, Redelegated
+  - These add up to **TOTAL DELEGATED**
 
-### Current Stack
+- **HASH Price**: Changed from 4 decimals to 3 decimals ($0.030)
 
-**HTML Setup** (index.html v0.3.0):
+### 2. Comma Formatting Fix
+**Issue**: Comma separators were not working correctly for thousands
+
+**Root Cause**: ClojureScript regex literal didn't work with JavaScript's `.replace()`
+
+**Fix**: Changed to JavaScript RegExp constructor:
+```clojure
+(let [regex (js/RegExp. "\\B(?=(\\d{3})+(?!\\d))" "g")]
+  (.replace whole regex ","))
+```
+
+### 3. UNRESTRICTED Terminology
+**User Request**: "Change name 'available' to 'unrestricted' - that sounds like a better description: unrestricted-hash are tokens that can be freely transferred, traded or delegated/unbonded"
+
+**Changes**:
+- Updated label from "AVAILABLE" to "UNRESTRICTED" in Account Balance table
+- Updated test-phase5.js to check for "UNRESTRICTED" text
+- Bumped cache-busting version to v0.8.1 to force browser reload
+
+### Files Modified This Session
+1. **src/app/core.cljs**: Lines 150, 163-171, 261-302, 312-329
+2. **test-phase5.js**: Lines 26-63, 82-85
+3. **index.html**: Line 39 (version bump to v0.8.1)
+
+### Latest Test Results
+```
+🧪 Testing Phase 5: All Wallet Data (Multi-Endpoint)
+
+=== Testing NO_VESTING Wallet ===
+✅ Account Balance section present
+✅ Liquid field present
+✅ Committed field present
+✅ Delegated field present
+✅ Wallet total calculation present
+✅ Delegation details section present
+✅ Total delegated sum present
+✅ Staked amount present
+✅ Rewards amount present
+NO_VESTING Result: 9/9 checks passed ✅
+
+=== Testing VESTING Wallet ===
+✅ Account Balance section present
+✅ Liquid field present
+✅ Committed field present
+✅ Delegated field present
+✅ Wallet total calculation present
+✅ Delegation details section present
+✅ Total delegated sum present
+✅ Staked amount present
+✅ Rewards amount present
+✅ Unvested amount present
+✅ Unrestricted amount present
+VESTING Result: 11/11 checks passed ✅
+
+✅ Phase 5 PASSED
+```
+
+## Current Stack
+
+**HTML Setup** (index.html v0.8.1):
 ```html
+<!-- React and ReactDOM (required for Reagent) -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+<!-- Scittle Base -->
 <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.js"></script>
+
+<!-- Scittle Plugins -->
 <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.cljs-ajax.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.promesa.js"></script>
-<script type="application/x-scittle" src="src/app/core.cljs?v=0.3.0"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.reagent.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/scittle.re-frame.js"></script>
+
+<!-- Application CLJS -->
+<script type="application/x-scittle" src="src/app/core.cljs?v=0.8.1"></script>
 ```
 
 **CLJS Pattern** (src/app/core.cljs):
 ```clojure
 (ns app.core
-  (:require [ajax.core :refer [GET]]))
+  (:require [reagent.dom :as rdom]
+            [re-frame.core :as rf]
+            [ajax.core :refer [GET]]))
 
-(GET "https://www.figuremarkets.com/service-hft-exchange/api/v1/markets"
-  {:handler (fn [response] ...)
-   :error-handler (fn [error] ...)
-   :response-format :json
-   :keywords? true})
+;; Re-frame event handlers
+(rf/reg-event-db ::initialize ...)
+(rf/reg-event-db ::update-wallet-address ...)
+(rf/reg-event-db ::loading-wallet ...)
+(rf/reg-event-db ::wallet-success ...)
+
+;; Re-frame subscriptions
+(rf/reg-sub ::status ...)
+(rf/reg-sub ::wallet-data ...)
+
+;; Reagent components
+(defn wallet-input-component [] ...)
+(defn wallet-data-component [] ...)
+```
+
+## Key Implementation Details
+
+### Wallet Data Formulas
+
+**For ALL Wallets**:
+- WALLET TOTAL = Liquid + Committed + Delegated
+- TOTAL DELEGATED = Staked + Rewards + Unbonding + Redelegated
+
+**For VESTING Wallets Only**:
+- UNRESTRICTED = WALLET TOTAL - Unvested
+- Unrestricted tokens can be freely transferred, traded, or delegated/unbonded
+
+### Multi-Endpoint Fetch Architecture
+
+Four parallel API calls with completion tracking:
+1. `/fetch_total_delegation_data/{wallet}` → delegation data
+2. `/wallet_liquid_balance/{wallet}` → liquid balance
+3. `/fetch_available_committed_amount/{wallet}` → committed amount (may fail for non-exchange accounts)
+4. `/fetch_vesting_total_unvested_amount/{wallet}` → vesting data (may fail for non-vesting accounts)
+
+Error handling:
+- Missing committed: defaults to 0 (no exchange account)
+- Missing vesting: defaults to nil (non-vesting account)
+- All 4 must complete before displaying results
+
+### Number Formatting
+
+**nhash to HASH conversion**: 1 HASH = 1,000,000,000 nhash
+
+```clojure
+(defn nhash->hash [nhash-amount]
+  (when nhash-amount
+    (let [amount-num (if (number? nhash-amount)
+                      nhash-amount
+                      (js/parseFloat nhash-amount))
+          formatted (.toFixed (/ amount-num 1000000000) 2)]
+      (format-number-with-commas formatted))))
+
+(defn format-number-with-commas [num-str]
+  (let [[whole decimal] (.split num-str ".")
+        regex (js/RegExp. "\\B(?=(\\d{3})+(?!\\d))" "g")
+        with-commas (.replace whole regex ",")]
+    (if decimal
+      (str with-commas "." decimal)
+      with-commas)))
+```
+
+**CSS**: Uses `font-variant-numeric: tabular-nums` for aligned columns
+
+## API Integration
+
+### Figure Markets API
+
+**Markets Endpoint**:
+- URL: `https://www.figuremarkets.com/service-hft-exchange/api/v1/markets`
+- Returns: `{data: [{symbol, midMarketPrice, ...}, ...]}`
+- HASH-USD price displayed with 3 decimals
+
+**Provenance Blockchain MCP API** (base: `https://pb-fm-mcp-dev.creativeapptitude.com/api`):
+- `/fetch_total_delegation_data/{wallet}` - Delegation details
+- `/wallet_liquid_balance/{wallet}` - Liquid balance in wallet
+- `/fetch_available_committed_amount/{wallet}` - Committed to exchange
+- `/fetch_vesting_total_unvested_amount/{wallet}` - Vesting schedule data
+
+### Response Structures
+
+**Delegation Response**:
+```javascript
+{
+  staking_validators: 2,
+  delegated_staked_amount: {amount: 123000000000, denom: "nhash"},
+  delegated_rewards_amount: {amount: 45000000, denom: "nhash"},
+  delegated_unbonding_amount: {amount: 0, denom: "nhash"},
+  delegated_redelegated_amount: {amount: 0, denom: "nhash"},
+  delegated_total_delegated_amount: {amount: 123045000000, denom: "nhash"}
+}
+```
+
+**Vesting Response**:
+```javascript
+{
+  vesting_total_unvested_amount: 500000000000  // in nhash
+}
+```
+
+## Project Structure
+
+```
+fm-wallet-info/
+├── index.html              # Entry point (v0.8.1)
+├── src/app/core.cljs      # Main app logic (Reagent + re-frame)
+├── server.bb              # Babashka HTTP server (http-kit)
+├── run-test.bb            # Test runner with lifecycle
+├── test-phase5.js         # Phase 5 comprehensive test
+├── test/
+│   ├── test-hello.js      # Phase 1 test
+│   ├── test-hash-price.js # Phase 2 test
+│   └── package.json       # Playwright deps
+├── tmp/
+│   └── (scratch files)
+├── plan.md                # Detailed planning
+├── CLAUDE.md              # AI guidelines
+├── context.md             # This file
+└── README.md              # User docs
+```
+
+## Testing Workflow
+
+```bash
+# Run Phase 5 test (uses hardcoded test wallets)
+bb run-test.bb test-phase5.js
+
+# Or run directly
+lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+bb server.bb 8000 &
+sleep 3
+node test-phase5.js
+
+# Manual server
+bb server.bb 8000
+```
+
+### Test Wallets (Hardcoded in test-phase5.js)
+
+**NO_VESTING**: `pb1dsuqw9wn7r0g8m9pm6em8es3fh0l52zrlequcwvnw5yjfkwrqp5scax55t`
+- Has liquid balance, delegations, committed amount
+- No vesting schedule
+- Tests 9 checks
+
+**VESTING**: `pb1c9rqwfefggk3s3y79rh8quwvp8rf8ayr7qvmk8`
+- Has liquid balance, delegations, vesting schedule
+- Tests 11 checks (includes Unvested and UNRESTRICTED)
+
+## Git History (Recent)
+
+```
+ae95a16 Bump cache-busting version to v0.8.1 to force browser reload
+a049138 Rename AVAILABLE to UNRESTRICTED for better clarity
+cd42c04 Fix comma separator using JavaScript RegExp constructor
+7f3ab29 Phase 5 display restructure: WALLET TOTAL and TOTAL DELEGATED
 ```
 
 ## Critical Constraints
@@ -54,164 +292,14 @@ The reference project (figure-fm-hash-prices) loads scittle.cljs-ajax.js but act
         y (second data)] ...))
 ```
 
-### Scittle Load Order
+### Browser Caching
 
-Scripts MUST load in this order:
-1. Tailwind CSS
-2. Scittle base (scittle.js)
-3. Scittle plugins (cljs-ajax, promesa, etc.)
-4. Application CLJS files
-
-Use `defer` attribute on all Scittle scripts.
-
-## Available Scittle Plugins (v0.7.28)
-
-From `https://cdn.jsdelivr.net/npm/scittle@0.7.28/dist/`:
-
-- **scittle.js** - Core interpreter (required)
-- **scittle.cljs-ajax.js** - HTTP (ajax.core) ✅ Currently using
-- **scittle.promesa.js** - Promises ✅ Currently using
-- **scittle.reagent.js** - React wrapper (needs React)
-- **scittle.re-frame.js** - State mgmt (needs Reagent)
-- **scittle.replicant.js** - Alt React wrapper
-- **scittle.pprint.js** - Pretty printing
-- **scittle.nrepl.js** - REPL connectivity
-
-## Project Structure
-
-```
-fm-wallet-info/
-├── index.html              # Entry point (v0.3.0)
-├── src/app/core.cljs      # Main app logic
-├── server.bb              # Babashka HTTP server (http-kit)
-├── run-test.bb            # Test runner with lifecycle
-├── test/
-│   ├── test-hello.js      # Phase 1 test
-│   ├── test-hash-price.js # Phase 2 test
-│   └── package.json       # Playwright deps
-├── tmp/
-│   └── figure-fm-hash-prices/ # Reference project
-├── plan.md                # Detailed planning
-├── CLAUDE.md              # AI guidelines
-├── context.md             # This file
-└── README.md              # User docs
+**When code doesn't update**: The cache-busting version in index.html forces browser reload:
+```html
+<script type="application/x-scittle" src="src/app/core.cljs?v=0.8.1"></script>
 ```
 
-## Testing Workflow
-
-```bash
-# Run specific test
-bb run-test.bb test-hash-price.js
-
-# Run wallet test with real wallet address (secure)
-export TEST_WALLET_ADDRESS="pb1your_wallet_address_here"
-bb run-test.bb test-wallet-info.js
-
-# Manual server
-bb server.bb 8000
-
-# Run test directly (server must be running)
-cd test && node test-hash-price.js
-```
-
-### Testing with Real Wallet Addresses
-
-**CRITICAL**: Real wallet addresses are confidential and must never be stored in files or committed to git.
-
-**Secure Testing Protocol**:
-1. User sets environment variable: `export WALLET_NO_VESTING="pb1..."`
-2. Playwright test reads from `process.env.WALLET_NO_VESTING`
-3. Test fills wallet input field with the address
-4. Test verifies data displays correctly
-5. Environment variable only exists in current shell session
-6. No persistence, no storage, no commits
-
-**Test Wallet Environment Variables**:
-```bash
-# Different test scenarios (user sets these)
-export WALLET_EMPTY="pb1..."           # Empty wallet (no HASH holdings)
-export WALLET_NO_VESTING="pb1..."      # Normal wallet without vesting
-export WALLET_VESTING="pb1..."         # Wallet with vesting schedule
-export WALLET_INVALID="not_a_wallet"   # Invalid wallet address format
-```
-
-**Playwright Test Pattern**:
-```javascript
-// Test different scenarios
-const scenarios = [
-  { name: 'Empty Wallet', env: 'WALLET_EMPTY' },
-  { name: 'No Vesting', env: 'WALLET_NO_VESTING' },
-  { name: 'Vesting Account', env: 'WALLET_VESTING' },
-  { name: 'Invalid Address', env: 'WALLET_INVALID' }
-];
-
-for (const scenario of scenarios) {
-  const address = process.env[scenario.env];
-  if (!address) {
-    console.warn(`⚠️ ${scenario.env} not set, skipping test`);
-    continue;
-  }
-
-  await page.fill('#wallet-address-input', address);
-  await page.click('#fetch-wallet-data-button');
-  // Verify results based on scenario...
-}
-```
-
-**Test Coverage**:
-- ✅ **WALLET_EMPTY**: Verify UI handles zero balances gracefully
-- ✅ **WALLET_NO_VESTING**: Verify normal wallet with delegations, liquid balance
-- ✅ **WALLET_VESTING**: Verify vesting calculations and display
-- ✅ **WALLET_INVALID**: Verify error handling for invalid addresses
-
-## Git Tags
-
-- **v0.1.0** - Phase 1: Hello World
-- **v0.2.0** - Phase 2: HASH price with native fetch
-- **v0.3.0** - (pending) Phase 2 update: switched to cljs-ajax
-
-## API Integration
-
-**Figure Markets API**:
-- Endpoint: `https://www.figuremarkets.com/service-hft-exchange/api/v1/markets`
-- Returns array in `data` field
-- Each market has: `symbol`, `midMarketPrice`, `high24h`, `low24h`, etc.
-- Filter for `symbol: "HASH-USD"`
-- Display `midMarketPrice` with 4 decimal places
-
-**Current Response**:
-- 21 markets total
-- HASH-USD price: ~$0.0300
-
-## State Management Pattern
-
-```clojure
-(defonce state (atom {:status :loading    ; or :success, :error
-                      :hash-price nil
-                      :error nil}))
-
-(defn render []
-  (let [{:keys [status hash-price error]} @state]
-    (case status
-      :loading "Loading..."
-      :success (str "Price: $" hash-price)
-      :error (str "Error: " error))))
-```
-
-## GitHub Pages
-
-- **Repo**: https://github.com/franks42/fm-wallet-info
-- **Live URL**: https://franks42.github.io/fm-wallet-info/
-- **Config**: Settings → Pages → Source: main branch, / (root)
-- **Special files**: .nojekyll (bypass Jekyll processing)
-
-## Common Issues
-
-1. **Port 8000 in use**: `lsof -ti:8000 | xargs kill -9`
-2. **404 on .cljs files**: Check .nojekyll exists
-3. **Caching issues**: Version query param in HTML (e.g., `?v=0.3.0`)
-4. **Destructuring errors**: Use `first`, `second`, `nth` instead
-5. **Script load order**: Scittle plugins must load after scittle.js
+Increment the version number (e.g., v0.8.2) when deploying significant changes.
 
 ## 🔒 CRITICAL SECURITY REQUIREMENT 🔒
 
@@ -230,7 +318,7 @@ Wallet addresses are **CONFIDENTIAL INFORMATION**. This is not negotiable.
 ### What You MAY Do:
 1. ✅ Store in browser state atom (memory only)
 2. ✅ Use localStorage ONLY with explicit user consent
-3. ✅ Direct API calls: browser → Figure Markets
+3. ✅ Direct API calls: browser → Figure Markets / Provenance APIs
 4. ✅ User text input (not URL params)
 5. ✅ Provide "clear data" functionality
 
@@ -254,48 +342,76 @@ Wallet addresses are **CONFIDENTIAL INFORMATION**. This is not negotiable.
 
 **This is a fundamental privacy requirement. Violations are unacceptable.**
 
-## Next Steps for Phase 3
+## Common Issues & Solutions
 
-User will define wallet information requirements. Be prepared to:
-- Fetch wallet data from Figure Markets API
-- Display wallet holdings, balances, transactions
-- Handle wallet address input (text field only, no URL params)
-- Implement localStorage consent flow
-- Add more complex UI components
-- Consider using Reagent if UI complexity increases
-
-## Reference Project Insights
-
-**figure-fm-hash-prices**:
-- Located in `tmp/figure-fm-hash-prices/`
-- Uses Re-frame + Reagent (more complex)
-- Loads scittle.cljs-ajax.js but uses native fetch (inconsistent)
-- Good reference for API responses but we simplified approach
-- Our project is simpler and more consistent with Clojure idioms
+1. **Port 8000 in use**: `lsof -ti:8000 | xargs kill -9`
+2. **Browser shows old code**: Bump version in index.html (e.g., v0.8.1 → v0.8.2)
+3. **Comma formatting broken**: Use `js/RegExp` constructor, not regex literals
+4. **Destructuring errors**: Use `first`, `second`, `nth` instead of vector destructuring
+5. **Script load order**: Scittle plugins must load after scittle.js with `defer` attribute
+6. **CORS errors on vesting endpoint**: Expected for non-vesting accounts, handled gracefully
 
 ## Development Principles
 
 1. **Test before deploy**: All Playwright tests must pass
 2. **Keep it simple**: Don't add complexity until needed
-3. **Idiomatic Clojure**: Use cljs-ajax, not js interop
-4. **Document everything**: Update plan.md and CLAUDE.md
-5. **Version control**: Tag every phase completion
+3. **Idiomatic Clojure**: Use cljs-ajax, Reagent, re-frame
+4. **Document everything**: Update context.md for continuity
+5. **Version control**: Commit with descriptive messages
 
-## Latest Test Results
+## GitHub Pages
 
-```
-🎉 HASH PRICE TEST PASSED
-✅ Data received from Figure Markets
-📊 Response contains 21 markets
-💰 HASH price: 0.03
-✅ Price displayed in UI: $0.0300
-✅ Price format correct
-```
+- **Repo**: https://github.com/franks42/fm-wallet-info
+- **Live URL**: https://franks42.github.io/fm-wallet-info/
+- **Config**: Settings → Pages → Source: main branch, / (root)
+- **Special files**: .nojekyll (bypass Jekyll processing)
 
-**Console logs working**:
-- "🚀 Fetching HASH price from Figure Markets (using cljs-ajax)..."
-- "✅ Data received from Figure Markets"
-- "📊 Response contains 21 markets"
-- "💰 HASH price: 0.03"
+## Next Steps / Future Enhancements
 
-All detailed logging verified through Playwright console monitoring.
+Potential improvements (not started):
+- Add validator names/details in delegation breakdown
+- Historical price charts
+- Transaction history
+- Multiple wallet comparison
+- Export to CSV
+- Dark/light theme toggle
+- Mobile responsive improvements
+
+## Reference Information
+
+**Scittle Plugins Available** (v0.7.28):
+- ✅ scittle.cljs-ajax.js - HTTP (currently using)
+- ✅ scittle.promesa.js - Promises (currently using)
+- ✅ scittle.reagent.js - React wrapper (currently using)
+- ✅ scittle.re-frame.js - State management (currently using)
+- scittle.replicant.js - Alternative React wrapper
+- scittle.pprint.js - Pretty printing
+- scittle.nrepl.js - REPL connectivity
+
+**Load Order** (MUST follow this):
+1. Tailwind CSS
+2. React + ReactDOM
+3. Scittle base (scittle.js)
+4. Scittle plugins (with `defer`)
+5. Application CLJS files
+
+## Current State Summary
+
+**What Works**:
+- ✅ HASH price from Figure Markets (3 decimals)
+- ✅ Wallet address input
+- ✅ Multi-endpoint parallel fetch (4 APIs)
+- ✅ Account Balance display with WALLET TOTAL
+- ✅ Vesting account support with UNRESTRICTED calculation
+- ✅ Delegation Details with TOTAL DELEGATED
+- ✅ Comma formatting for thousands
+- ✅ Error handling for missing data
+- ✅ Comprehensive Playwright tests (9/9 and 11/11)
+
+**Known Limitations**:
+- Vesting endpoint may fail with CORS (handled gracefully)
+- Committed amount may fail for non-exchange accounts (defaults to 0)
+- No localStorage persistence yet (security by design)
+- Browser caching requires version bump for updates
+
+**Ready to Resume**: All tests passing, code committed and pushed to GitHub.
